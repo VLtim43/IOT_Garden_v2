@@ -6,7 +6,53 @@
 
 ---
 
+# IOT Garden V.2
+
+![ESP32](https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)
+![Espressif](https://img.shields.io/badge/espressif-E7352C.svg?style=for-the-badge&logo=espressif&logoColor=white)
+![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
+
+---
+
 - Soil Humidity Sensor
 - Temp/Humidity Sensor
 - Water Level Sensor
 - Light Sensor
+- Buzzer
+- OLED Scren
+- IR controls
+
+## Main Directory Tree
+
+```text
+main/
+├── CMakeLists.txt
+├── config/
+│   └── pins.h          // definitions of Pins, IR patterns and LED configs
+├── main.c
+└── modules/
+    ├── actuators/
+    │   ├── water_pump/
+    │   │   └── water_pump.c
+    │   └── w2812b/
+    │       └── w2812b.c
+    ├── clock/
+    │   └── clock.c
+    ├── display/
+    │   ├── OLED_display.c
+    │   └── OLED_display.h
+    ├── input/
+    │   ├── ir_remote.c
+    │   └── ir_remote.h
+    ├── sensors/
+    │   ├── sensor_dht/
+    │   │   └── sensor_dht.c
+    │   ├── sensor_light/
+    │   │   └── sensor_light.c
+    │   ├── sensor_soil/
+    │   │   └── sensor_soil.c
+    │   └── sensor_water/
+    │       └── sensor_water.c
+    └── tasks/
+        └── task.c
+```
