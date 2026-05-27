@@ -12,7 +12,7 @@
 - Water Level Sensor
 - Light Sensor
 - Buzzer
-- OLED Scren
+- OLED Screen
 - IR controls
 
 ## Main Directory Tree
@@ -27,16 +27,14 @@ main/
     ├── actuators/
     │   ├── water_pump/
     │   │   └── water_pump.c
-    │   └── w2812b/
-    │       └── w2812b.c
+    │   └── ws2812b/
+    │       └── ws2812b.c
     ├── clock/
     │   └── clock.c
     ├── display/
-    │   ├── OLED_display.c
-    │   └── OLED_display.h
+    │   └── OLED_display.c
     ├── input/
-    │   ├── ir_remote.c
-    │   └── ir_remote.h
+    │   └── ir_remote.c
     ├── sensors/
     │   ├── sensor_dht/
     │   │   └── sensor_dht.c
