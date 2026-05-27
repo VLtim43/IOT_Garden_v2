@@ -20,7 +20,7 @@
 main/
 ├── CMakeLists.txt
 ├── config/
-│   └── pins.h          // definitions of Pins, IR patterns and LED configs
+│   └── pins.h
 ├── main.c
 └── modules/
     ├── actuators/
