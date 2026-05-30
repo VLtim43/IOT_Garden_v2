@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include "driver/gpio.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "state.h"
 
-void app_main(void) {}
+void app_main(void) { garden_state_init(); }
