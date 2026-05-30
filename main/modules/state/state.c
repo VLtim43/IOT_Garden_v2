@@ -24,12 +24,12 @@ void garden_state_init(void) {
   s_state_mutex = xSemaphoreCreateMutex();
   lock_state();
   s_state.soil_moisture_percent = 50;
-  s_state.air_temperature = 24;
+  s_state.air_temperature_c = 24;
   s_state.air_humidity_percent = 60;
-  s_state.light_bool = 50;
-  s_state.water_bool = true;
-  s_state.pump_bool = false;
-  s_state.grow_light_bool = false;
+  s_state.water_level = true;
+  s_state.pump_on = false;
+  s_state.light_on = false;
+  s_state.auto_mode = true;
   unlock_state();
 }
 
@@ -44,28 +44,34 @@ garden_state_t garden_state_get(void) {
 }
 
 // update state in all sensors
-void garden_state_update_sensors(int soil_moisture_percent, int air_temperature,
-                                 int air_humidity_percent, int light_bool,
-                                 bool water_bool) {
+void garden_state_update_sensors(int soil_moisture_percent, int air_temperature_c,
+                                 int air_humidity_percent,
+                                 bool water_level) {
   lock_state();
   s_state.soil_moisture_percent = soil_moisture_percent;
-  s_state.air_temperature = air_temperature;
+  s_state.air_temperature_c = air_temperature_c;
   s_state.air_humidity_percent = air_humidity_percent;
-  s_state.light_bool = light_bool;
-  s_state.water_bool = water_bool;
+  s_state.water_level = water_level;
   unlock_state();
 }
 
 // update pump state
-void garden_state_set_pump(bool pump_bool) {
+void garden_state_set_pump(bool pump_on) {
   lock_state();
-  s_state.pump_bool = pump_bool;
+  s_state.pump_on = pump_on;
   unlock_state();
 }
 
-// upate grow lights state
-void garden_state_set_grow_light(bool grow_light_bool) {
+// update light state
+void garden_state_set_light(bool light_on) {
   lock_state();
-  s_state.grow_light_bool = grow_light_bool;
+  s_state.light_on = light_on;
+  unlock_state();
+}
+
+// update automatic control mode
+void garden_state_set_auto_mode(bool auto_mode) {
+  lock_state();
+  s_state.auto_mode = auto_mode;
   unlock_state();
 }
