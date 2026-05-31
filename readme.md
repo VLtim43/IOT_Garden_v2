@@ -14,6 +14,25 @@
 - OLED Screen
 - IR controls
 
+## State / Task Setup
+
+All modules share data through the global garden state. Sensor tasks write new readings into state, actuator tasks update outputs from state, and the display task periodically reads state to draw the OLED UI.
+
+```text
+                   ┌────────────────┐
+                   │     State      │
+                   └────────────────┘
+                           ▲
+         │                 │                  │
+         ▼                 ▼                  ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│    Sensor    │    │   Actuator   │    │   Display    │
+│    Tasks     │    │     Task     │    │    Tasks     │
+└──────────────┘    └──────────────┘    └──────────────┘
+
+Write readings      Render OLED       Control outputs
+```
+
 ## Main Directory Tree
 
 ```text
