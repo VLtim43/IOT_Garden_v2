@@ -1,7 +1,11 @@
 idf_component_register(SRCS "main.c"
                             "modules/state/state.c"
                             "modules/display/OLED_display.c"
+                            "modules/sensors/sensor_dht/sensor_dht.c"
+                            "modules/sensors/sensor_light/sensor_light.c"
                     INCLUDE_DIRS "."
-                                 "modules/state"
-                                 "modules/display"
-                                 "config")
+                                  "modules/state"
+                                  "modules/display"
+                                  "modules/sensors/sensor_dht"
+                                  "modules/sensors/sensor_light"
+                                  "config")

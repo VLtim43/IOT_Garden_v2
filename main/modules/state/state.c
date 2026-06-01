@@ -6,6 +6,7 @@
 static garden_state_t s_state;
 static SemaphoreHandle_t s_state_mutex;
 
+// helper to lock state
 static void lock_state(void) {
   if (s_state_mutex == NULL) {
     return;
@@ -13,6 +14,7 @@ static void lock_state(void) {
   xSemaphoreTake(s_state_mutex, portMAX_DELAY);
 }
 
+// helper to unlock state
 static void unlock_state(void) {
   if (s_state_mutex == NULL) {
     return;
@@ -20,16 +22,12 @@ static void unlock_state(void) {
   xSemaphoreGive(s_state_mutex);
 }
 
+// initialize state
 void garden_state_init(void) {
   s_state_mutex = xSemaphoreCreateMutex();
   lock_state();
-  s_state.soil_moisture_percent = 50;
-  s_state.air_temperature_c = 24;
-  s_state.air_humidity_percent = 60;
-  s_state.water_level = true;
-  s_state.pump_on = false;
-  s_state.light_on = false;
-  s_state.auto_mode = true;
+  s_state.ambient_light_detected = true;
+  s_state.temperature_c = 0;
   unlock_state();
 }
 
@@ -43,35 +41,14 @@ garden_state_t garden_state_get(void) {
   return state;
 }
 
-// update state in all sensors
-void garden_state_update_sensors(int soil_moisture_percent, int air_temperature_c,
-                                 int air_humidity_percent,
-                                 bool water_level) {
+void garden_state_set_ambient_light(bool detected) {
   lock_state();
-  s_state.soil_moisture_percent = soil_moisture_percent;
-  s_state.air_temperature_c = air_temperature_c;
-  s_state.air_humidity_percent = air_humidity_percent;
-  s_state.water_level = water_level;
+  s_state.ambient_light_detected = detected;
   unlock_state();
 }
 
-// update pump state
-void garden_state_set_pump(bool pump_on) {
+void garden_state_set_temperature(int temperature_c) {
   lock_state();
-  s_state.pump_on = pump_on;
-  unlock_state();
-}
-
-// update light state
-void garden_state_set_light(bool light_on) {
-  lock_state();
-  s_state.light_on = light_on;
-  unlock_state();
-}
-
-// update automatic control mode
-void garden_state_set_auto_mode(bool auto_mode) {
-  lock_state();
-  s_state.auto_mode = auto_mode;
+  s_state.temperature_c = temperature_c;
   unlock_state();
 }
