@@ -21,14 +21,14 @@ All modules share data through the global garden state. Sensor tasks write new r
 ```text
                                        ┌────────────────┐
                                        │     State      │
-                                       └────────────────┘
-                            ▲                  ▲                   ▲
-                            │                  │                   │
-                            ▼                  ▼                   ▼
-                    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-                    │    Sensor    │    │   Actuator   │    │   Display    │
-                    │    Tasks     │    │     Task     │    │    Tasks     │
-                    └──────────────┘    └──────────────┘    └──────────────┘
+                                       └───────┬────────┘
+                                               │
+                    ┌──────────────────────────┼──────────────────────────┐
+                    │                          │                          │
+             ┌──────┴───────┐           ┌──────┴───────┐           ┌──────┴───────┐
+             │    Sensor    │           │   Actuator   │           │   Display    │
+             │    Tasks     │           │     Task     │           │    Tasks     │
+             └──────────────┘           └──────────────┘           └──────────────┘
 ```
 
 ## Main Directory Tree
@@ -36,6 +36,7 @@ All modules share data through the global garden state. Sensor tasks write new r
 ```text
 main/
 ├── CMakeLists.txt
+├── idf_component.yml
 ├── config/
 │   └── pins.h
 ├── main.c
@@ -43,8 +44,8 @@ main/
     ├── actuators/
     │   ├── water_pump/
     │   │   └── water_pump.c
-    │   └── ws2812b/
-    │       └── ws2812b.c
+    │   └── w2812b/
+    │       └── w2812b.c
     ├── clock/
     │   └── clock.c
     ├── display/
@@ -60,6 +61,6 @@ main/
     │   │   └── sensor_soil.c
     │   └── sensor_water/
     │       └── sensor_water.c
-    └── tasks/
-        └── task.c
+    └── state/
+        └── state.c
 ```
