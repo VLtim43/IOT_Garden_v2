@@ -10,6 +10,7 @@
 #include "state.h"
 
 #include <stdio.h>
+#include <string.h>
 
 // log tag
 static const char* TAG = "OLED";
@@ -115,6 +116,14 @@ static void oled_display_update_water_level(int water_level_percent) {
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 3, line, false));
 }
 
+static void oled_display_update_led_color(const char* color_code) {
+  char line[16];
+
+  snprintf(line, sizeof(line), "LED: %s", color_code);
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 4, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 4, line, false));
+}
+
 // render all elements on the screen
 static void oled_display_render_full(const garden_state_t* state) {
   ESP_ERROR_CHECK(ssd1306_clear_display(s_display_handle, false));
@@ -124,6 +133,7 @@ static void oled_display_render_full(const garden_state_t* state) {
   oled_display_update_temperature(state->temperature_c);
   oled_display_update_soil_raw(state->soil_raw);
   oled_display_update_water_level(state->water_level_percent);
+  oled_display_update_led_color(state->led_color_code);
 }
 
 static void oled_display_task(void* arg) {
@@ -134,8 +144,12 @@ static void oled_display_task(void* arg) {
   int last_temperature_c = state.temperature_c;
   int last_soil_raw = state.soil_raw;
   int last_water_level_percent = state.water_level_percent;
+  char last_led_color_code[GARDEN_LED_COLOR_CODE_MAX_LEN];
   bool ir_active = true;
   int full_refresh_count = 0;
+
+  strncpy(last_led_color_code, state.led_color_code, sizeof(last_led_color_code));
+  last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
 
   oled_display_init();
   oled_display_render_full(&state);
@@ -162,6 +176,14 @@ static void oled_display_task(void* arg) {
     if (state.water_level_percent != last_water_level_percent) {
       oled_display_update_water_level(state.water_level_percent);
       last_water_level_percent = state.water_level_percent;
+    }
+
+    if (strncmp(state.led_color_code, last_led_color_code,
+                sizeof(last_led_color_code)) != 0) {
+      oled_display_update_led_color(state.led_color_code);
+      strncpy(last_led_color_code, state.led_color_code,
+              sizeof(last_led_color_code));
+      last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
     }
 
     if (ir_active) {

@@ -16,6 +16,14 @@
 // DHT11 sensor data pin.
 #define DHT11_DATA_GPIO 27
 
+// Water pump control pin.
+#define WATER_PUMP_GPIO 4
+
+// WS2812B LED strip control pin.
+#define W2812B_GPIO 5
+#define W2812B_LED_COUNT 25
+#define W2812B_BRIGHTNESS 1
+
 // Capacitive soil moisture sensor v2 analog output pin.
 #define SOIL_SENSOR_ADC_CHANNEL ADC_CHANNEL_5  //  GPIO 33
 #define SOIL_SENSOR_DRY_RAW 2800

@@ -4,6 +4,8 @@
 #include "sensor_soil.h"
 #include "sensor_water.h"
 #include "state.h"
+#include "w2812b.h"
+#include "water_pump.h"
 
 void app_main(void) {
   garden_state_init();
@@ -12,5 +14,7 @@ void app_main(void) {
   sensor_light_start();
   sensor_soil_start();
   sensor_water_start();
+  // water_pump_init();
+  w2812b_start();
   oled_display_start();
 }

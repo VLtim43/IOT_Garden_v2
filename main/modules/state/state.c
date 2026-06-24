@@ -3,6 +3,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
+#include <string.h>
+
 static garden_state_t s_state;
 static SemaphoreHandle_t s_state_mutex;
 
@@ -30,6 +32,8 @@ void garden_state_init(void) {
   s_state.temperature_c = 0;
   s_state.soil_raw = 0;
   s_state.water_level_percent = 0;
+  strncpy(s_state.led_color_code, "OFF", sizeof(s_state.led_color_code));
+  s_state.led_color_code[sizeof(s_state.led_color_code) - 1] = '\0';
   unlock_state();
 }
 
@@ -64,5 +68,12 @@ void garden_state_set_soil_raw(int raw) {
 void garden_state_set_water_level(int water_level_percent) {
   lock_state();
   s_state.water_level_percent = water_level_percent;
+  unlock_state();
+}
+
+void garden_state_set_led_color_code(const char* color_code) {
+  lock_state();
+  strncpy(s_state.led_color_code, color_code, sizeof(s_state.led_color_code));
+  s_state.led_color_code[sizeof(s_state.led_color_code) - 1] = '\0';
   unlock_state();
 }
