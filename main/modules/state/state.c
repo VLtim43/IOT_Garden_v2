@@ -28,7 +28,8 @@ void garden_state_init(void) {
   lock_state();
   s_state.ambient_light_detected = true;
   s_state.temperature_c = 0;
-  s_state.soil_moisture_percent = 0;
+  s_state.soil_raw = 0;
+  s_state.water_level_percent = 0;
   unlock_state();
 }
 
@@ -54,8 +55,14 @@ void garden_state_set_temperature(int temperature_c) {
   unlock_state();
 }
 
-void garden_state_set_soil_moisture(int moisture_percent) {
+void garden_state_set_soil_raw(int raw) {
   lock_state();
-  s_state.soil_moisture_percent = moisture_percent;
+  s_state.soil_raw = raw;
+  unlock_state();
+}
+
+void garden_state_set_water_level(int water_level_percent) {
+  lock_state();
+  s_state.water_level_percent = water_level_percent;
   unlock_state();
 }

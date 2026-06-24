@@ -99,12 +99,20 @@ static void oled_display_update_temperature(int temperature_c) {
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 1, line, false));
 }
 
-static void oled_display_update_soil_moisture(int moisture_percent) {
+static void oled_display_update_soil_raw(int raw) {
   char line[16];
 
-  snprintf(line, sizeof(line), "Soil: %d %%", moisture_percent);
+  snprintf(line, sizeof(line), "Soil: %d", raw);
   ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 2, false));
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 2, line, false));
+}
+
+static void oled_display_update_water_level(int water_level_percent) {
+  char line[16];
+
+  snprintf(line, sizeof(line), "Water: %d %%", water_level_percent);
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 3, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 3, line, false));
 }
 
 // render all elements on the screen
@@ -114,7 +122,8 @@ static void oled_display_render_full(const garden_state_t* state) {
   oled_display_update_ir_icon(true);
   oled_display_update_light_icon(state->ambient_light_detected);
   oled_display_update_temperature(state->temperature_c);
-  oled_display_update_soil_moisture(state->soil_moisture_percent);
+  oled_display_update_soil_raw(state->soil_raw);
+  oled_display_update_water_level(state->water_level_percent);
 }
 
 static void oled_display_task(void* arg) {
@@ -123,7 +132,8 @@ static void oled_display_task(void* arg) {
   garden_state_t state = garden_state_get();
   bool last_ambient_light = state.ambient_light_detected;
   int last_temperature_c = state.temperature_c;
-  int last_soil_moisture_percent = state.soil_moisture_percent;
+  int last_soil_raw = state.soil_raw;
+  int last_water_level_percent = state.water_level_percent;
   bool ir_active = true;
   int full_refresh_count = 0;
 
@@ -144,9 +154,14 @@ static void oled_display_task(void* arg) {
       last_temperature_c = state.temperature_c;
     }
 
-    if (state.soil_moisture_percent != last_soil_moisture_percent) {
-      oled_display_update_soil_moisture(state.soil_moisture_percent);
-      last_soil_moisture_percent = state.soil_moisture_percent;
+    if (state.soil_raw != last_soil_raw) {
+      oled_display_update_soil_raw(state.soil_raw);
+      last_soil_raw = state.soil_raw;
+    }
+
+    if (state.water_level_percent != last_water_level_percent) {
+      oled_display_update_water_level(state.water_level_percent);
+      last_water_level_percent = state.water_level_percent;
     }
 
     if (ir_active) {

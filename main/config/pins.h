@@ -1,6 +1,10 @@
 #ifndef PINS_H
 #define PINS_H
 
+// Board pin labels:
+// Top row:    VIN GND D13 D12 D14 D27 D26 D25 D33 D32 D35 D34 VN VP EN
+// Bottom row: 3V3 GND D15 D2  D4  RX2 TX2 D5  D18 D19 D21 RX0 TX0 D22 D23
+
 // OLED pins
 #define OLED_I2C_SDA_GPIO 21
 #define OLED_I2C_SCL_GPIO 22
@@ -13,8 +17,13 @@
 #define DHT11_DATA_GPIO 27
 
 // Capacitive soil moisture sensor v2 analog output pin.
-#define SOIL_SENSOR_ADC_CHANNEL ADC_CHANNEL_7
+#define SOIL_SENSOR_ADC_CHANNEL ADC_CHANNEL_5  //  GPIO 33
 #define SOIL_SENSOR_DRY_RAW 2800
 #define SOIL_SENSOR_WET_RAW 1200
+
+// Water level sensor signal pin.
+#define WATER_LEVEL_ADC_CHANNEL ADC_CHANNEL_7  // GPIO 35
+#define WATER_LEVEL_EMPTY_RAW 0
+#define WATER_LEVEL_FULL_RAW 3075
 
 #endif
