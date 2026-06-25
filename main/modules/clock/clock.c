@@ -45,7 +45,7 @@ static void ds1302_set_dat_output(void) {
 
 static void ds1302_set_dat_input(void) {
   ESP_ERROR_CHECK(gpio_set_direction(DS1302_DAT_GPIO, GPIO_MODE_INPUT));
-  ESP_ERROR_CHECK(gpio_set_pull_mode(DS1302_DAT_GPIO, GPIO_PULLUP_ONLY));
+  ESP_ERROR_CHECK(gpio_set_pull_mode(DS1302_DAT_GPIO, GPIO_FLOATING));
 }
 
 static void ds1302_write_byte(uint8_t value, bool read_after) {
@@ -119,6 +119,8 @@ static bool ds1302_read_time(int* hour, int* minute) {
   uint8_t hours_raw = ds1302_read_register(DS1302_READ_HOURS);
 
   if ((seconds_raw & 0x80) != 0) {
+    ESP_LOGW(TAG, "invalid time: CH bit set sec=0x%02X min=0x%02X hour=0x%02X",
+             seconds_raw, minutes_raw, hours_raw);
     return false;
   }
 
@@ -137,12 +139,34 @@ static bool ds1302_read_time(int* hour, int* minute) {
   }
 
   if (hour_value > 23 || minute_value > 59) {
+    ESP_LOGW(TAG,
+             "invalid time: decoded hour=%d minute=%d from sec=0x%02X "
+             "min=0x%02X hour=0x%02X",
+             hour_value, minute_value, seconds_raw, minutes_raw, hours_raw);
     return false;
   }
+
+  ESP_LOGD(TAG, "raw time sec=0x%02X min=0x%02X hour=0x%02X -> %02d:%02d",
+           seconds_raw, minutes_raw, hours_raw, hour_value, minute_value);
 
   *hour = hour_value;
   *minute = minute_value;
   return true;
+}
+
+static void ds1302_resume_clock(void) {
+  uint8_t seconds_raw = ds1302_read_register(DS1302_READ_SECONDS);
+
+  ESP_LOGI(TAG, "seconds register before resume: 0x%02X", seconds_raw);
+  if ((seconds_raw & 0x80) == 0) {
+    return;
+  }
+
+  ds1302_write_register(DS1302_WRITE_CONTROL, 0x00);
+  ds1302_write_register(DS1302_WRITE_SECONDS, seconds_raw & 0x7F);
+
+  seconds_raw = ds1302_read_register(DS1302_READ_SECONDS);
+  ESP_LOGI(TAG, "seconds register after resume: 0x%02X", seconds_raw);
 }
 
 static void ds1302_init(void) {
@@ -170,8 +194,8 @@ static void ds1302_set_start_time(void) {
   ds1302_write_register(DS1302_WRITE_CONTROL, 0x00);
   ds1302_write_register(DS1302_WRITE_TRICKLE, 0x00);
   ds1302_write_register(DS1302_WRITE_SECONDS, int_to_bcd(0));
-  ds1302_write_register(DS1302_WRITE_MINUTES, int_to_bcd(40));
-  ds1302_write_register(DS1302_WRITE_HOURS, int_to_bcd(14));
+  ds1302_write_register(DS1302_WRITE_MINUTES, int_to_bcd(0));
+  ds1302_write_register(DS1302_WRITE_HOURS, int_to_bcd(16));
 
   if (ds1302_read_time(&hour, &minute)) {
     ESP_LOGI(TAG, "start time write read back as %02d:%02d", hour, minute);
@@ -183,7 +207,10 @@ static void ds1302_set_start_time(void) {
 static void clock_task(void* arg) {
   (void)arg;
 
+  int read_fail_count = 0;
+
   ds1302_init();
+  ds1302_resume_clock();
   // Run once to seed the RTC, then comment this out to stop overwriting time.
   // ds1302_set_start_time();
 
@@ -193,8 +220,13 @@ static void clock_task(void* arg) {
     char time_text[GARDEN_TIME_TEXT_MAX_LEN];
 
     if (ds1302_read_time(&hour, &minute)) {
+      read_fail_count = 0;
       snprintf(time_text, sizeof(time_text), "%02d:%02d", hour, minute);
     } else {
+      read_fail_count++;
+      if (read_fail_count == 1 || (read_fail_count % 5) == 0) {
+        ESP_LOGW(TAG, "read_time failed (%d)", read_fail_count);
+      }
       snprintf(time_text, sizeof(time_text), "--:--");
     }
 

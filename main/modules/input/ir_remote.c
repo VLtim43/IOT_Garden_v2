@@ -5,8 +5,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include "ir_codes.h"
 #include "pins.h"
 #include "state.h"
+#include "water_pump.h"
+#include "w2812b.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -14,6 +17,7 @@
 static const char* TAG = "IR_REMOTE";
 
 enum {
+  IR_COMMAND_COOLDOWN_MS = 250,
   IR_RESOLUTION_HZ = 1000000,
   IR_SYMBOL_BUFFER_SIZE = 128,
   IR_NEC_LEADER_HIGH_US = 9000,
@@ -177,6 +181,7 @@ static void ir_remote_task(void* arg) {
 
   while (true) {
     ir_rx_event_t event;
+    static TickType_t last_command_tick = 0;
     uint32_t raw_code = 0;
 
     ESP_ERROR_CHECK(rmt_receive(rx_channel, s_ir_symbols, sizeof(s_ir_symbols),
@@ -193,8 +198,23 @@ static void ir_remote_task(void* arg) {
       uint8_t command_inv = (raw_code >> 24) & 0xFF;
 
       if (command_name != NULL) {
+        TickType_t now = xTaskGetTickCount();
+        if ((now - last_command_tick) < pdMS_TO_TICKS(IR_COMMAND_COOLDOWN_MS)) {
+          continue;
+        }
+
+        last_command_tick = now;
         garden_state_set_ir_command(command_name);
         garden_state_mark_ir_activity();
+        if (raw_code == IR_CODE_LEFT) {
+          w2812b_cycle_left();
+        } else if (raw_code == IR_CODE_RIGHT) {
+          w2812b_cycle_right();
+        } else if (raw_code == IR_CODE_OK) {
+          w2812b_toggle_enabled();
+        } else if (raw_code == IR_CODE_STAR) {
+          water_pump_trigger();
+        }
         ESP_LOGI(TAG,
                  "Button=%s NEC code=0x%08lX addr=0x%02X addr_inv=0x%02X "
                  "cmd=0x%02X cmd_inv=0x%02X",

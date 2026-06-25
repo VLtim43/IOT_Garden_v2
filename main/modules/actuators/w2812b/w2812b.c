@@ -1,8 +1,6 @@
 #include "w2812b.h"
 
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "led_strip.h"
 #include "led_strip_rmt.h"
 #include "pins.h"
@@ -10,6 +8,21 @@
 
 static const char* TAG = "W2812B";
 static led_strip_handle_t s_strip;
+
+typedef struct {
+  uint8_t red;
+  uint8_t green;
+  uint8_t blue;
+  const char* color_code;
+} w2812b_color_t;
+
+static const w2812b_color_t W2812B_COLORS[] = {
+    {.red = 180, .green = 0, .blue = 255, .color_code = "PURPL"},
+    {.red = 255, .green = 0, .blue = 0, .color_code = "RED"},
+    {.red = 0, .green = 0, .blue = 255, .color_code = "BLUE"},
+};
+static int s_color_index = 0;
+static bool s_enabled = true;
 
 static uint8_t apply_brightness(uint8_t value) {
   if (value == 0 || W2812B_BRIGHTNESS == 0) {
@@ -42,6 +55,17 @@ static void w2812b_init(void) {
   ESP_LOGI(TAG, "ready on GPIO%d with %d LEDs", W2812B_GPIO, W2812B_LED_COUNT);
 }
 
+static void w2812b_apply_color_index(void) {
+  const w2812b_color_t* color = &W2812B_COLORS[s_color_index];
+  if (!s_enabled) {
+    w2812b_set_all(0, 0, 0);
+    garden_state_set_led_color_code("OFF");
+    return;
+  }
+
+  w2812b_set_color(color->red, color->green, color->blue, color->color_code);
+}
+
 void w2812b_set_all(uint8_t red, uint8_t green, uint8_t blue) {
   if (s_strip == NULL) {
     return;
@@ -65,15 +89,33 @@ void w2812b_set_color(uint8_t red, uint8_t green, uint8_t blue,
   garden_state_set_led_color_code(color_code);
 }
 
-static void w2812b_task(void* arg) {
-  (void)arg;
+void w2812b_cycle_left(void) {
+  s_color_index--;
+  if (s_color_index < 0) {
+    s_color_index = (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0])) - 1;
+  }
 
-  w2812b_init();
-  w2812b_set_color(180, 0, 255, "PURPL");
+  w2812b_apply_color_index();
+}
 
-  vTaskDelete(NULL);
+void w2812b_cycle_right(void) {
+  s_color_index++;
+  if (s_color_index >=
+      (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0]))) {
+    s_color_index = 0;
+  }
+
+  w2812b_apply_color_index();
+}
+
+void w2812b_toggle_enabled(void) {
+  s_enabled = !s_enabled;
+  w2812b_apply_color_index();
 }
 
 void w2812b_start(void) {
-  xTaskCreate(w2812b_task, "w2812b", 3072, NULL, 5, NULL);
+  w2812b_init();
+  s_color_index = 0;
+  s_enabled = true;
+  w2812b_apply_color_index();
 }

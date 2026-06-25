@@ -39,6 +39,8 @@ void garden_state_init(void) {
   s_state.led_color_code[sizeof(s_state.led_color_code) - 1] = '\0';
   strncpy(s_state.ir_command, "NONE", sizeof(s_state.ir_command));
   s_state.ir_command[sizeof(s_state.ir_command) - 1] = '\0';
+  strncpy(s_state.pump_status, "OFF", sizeof(s_state.pump_status));
+  s_state.pump_status[sizeof(s_state.pump_status) - 1] = '\0';
   unlock_state();
 }
 
@@ -94,6 +96,13 @@ void garden_state_set_ir_command(const char* command) {
   lock_state();
   strncpy(s_state.ir_command, command, sizeof(s_state.ir_command));
   s_state.ir_command[sizeof(s_state.ir_command) - 1] = '\0';
+  unlock_state();
+}
+
+void garden_state_set_pump_status(const char* status) {
+  lock_state();
+  strncpy(s_state.pump_status, status, sizeof(s_state.pump_status));
+  s_state.pump_status[sizeof(s_state.pump_status) - 1] = '\0';
   unlock_state();
 }
 

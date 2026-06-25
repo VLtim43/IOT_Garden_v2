@@ -146,6 +146,14 @@ static void oled_display_update_ir_command(const char* command) {
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 5, line, false));
 }
 
+static void oled_display_update_pump_status(const char* status) {
+  char line[16];
+
+  snprintf(line, sizeof(line), "Pump: %s", status);
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 6, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 6, line, false));
+}
+
 static void oled_display_show_boot_screen(void) {
   ESP_ERROR_CHECK(ssd1306_clear_display(s_display_handle, false));
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 1, "IOT Garden", false));
@@ -163,6 +171,7 @@ static void oled_display_render_full(const garden_state_t* state) {
   oled_display_update_water_level(state->water_level_percent);
   oled_display_update_led_color(state->led_color_code);
   oled_display_update_ir_command(state->ir_command);
+  oled_display_update_pump_status(state->pump_status);
 }
 
 static void oled_display_task(void* arg) {
@@ -177,6 +186,7 @@ static void oled_display_task(void* arg) {
   char last_time_text[GARDEN_TIME_TEXT_MAX_LEN];
   char last_led_color_code[GARDEN_LED_COLOR_CODE_MAX_LEN];
   char last_ir_command[GARDEN_IR_COMMAND_MAX_LEN];
+  char last_pump_status[GARDEN_PUMP_STATUS_MAX_LEN];
   bool ir_active = false;
   int ir_icon_hold_ms = 0;
   int full_refresh_count = 0;
@@ -187,6 +197,8 @@ static void oled_display_task(void* arg) {
   last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
   strncpy(last_ir_command, state.ir_command, sizeof(last_ir_command));
   last_ir_command[sizeof(last_ir_command) - 1] = '\0';
+  strncpy(last_pump_status, state.pump_status, sizeof(last_pump_status));
+  last_pump_status[sizeof(last_pump_status) - 1] = '\0';
 
   oled_display_init();
   oled_display_show_boot_screen();
@@ -244,6 +256,13 @@ static void oled_display_task(void* arg) {
       oled_display_update_ir_command(state.ir_command);
       strncpy(last_ir_command, state.ir_command, sizeof(last_ir_command));
       last_ir_command[sizeof(last_ir_command) - 1] = '\0';
+    }
+
+    if (strncmp(state.pump_status, last_pump_status,
+                sizeof(last_pump_status)) != 0) {
+      oled_display_update_pump_status(state.pump_status);
+      strncpy(last_pump_status, state.pump_status, sizeof(last_pump_status));
+      last_pump_status[sizeof(last_pump_status) - 1] = '\0';
     }
 
     if (ir_active) {

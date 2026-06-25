@@ -5,5 +5,6 @@
 
 void water_pump_init(void);
 void water_pump_set_enabled(bool enabled);
+void water_pump_trigger(void);
 
 #endif

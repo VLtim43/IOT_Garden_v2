@@ -17,8 +17,8 @@ void app_main(void) {
   sensor_soil_start();
   sensor_water_start();
   clock_start();
+  w2812b_start();
+  water_pump_init();
   ir_remote_start();
-  // water_pump_init();
-  // w2812b_start();
   oled_display_start();
 }
