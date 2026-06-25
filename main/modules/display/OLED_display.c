@@ -17,7 +17,9 @@ static const char* TAG = "OLED";
 static ssd1306_handle_t s_display_handle;
 
 enum {
+  OLED_BOOT_SPLASH_MS = 600,
   OLED_FULL_REFRESH_MS = 60000,
+  OLED_IR_ICON_HOLD_MS = 1200,
   OLED_STATE_POLL_MS = 250,
   OLED_IR_ICON_X = 104,
   OLED_LIGHT_ICON_X = 120,
@@ -41,6 +43,11 @@ static const uint8_t SUN_ICON_8X8[] = {
 static const uint8_t MOON_ICON_8X8[] = {
     0b00011100, 0b00111110, 0b01111000, 0b01110000,
     0b01111000, 0b00111110, 0b00011100, 0b00000000,
+};
+
+static const uint8_t BLANK_TIME_8X40[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
 static void oled_display_init(void) {
@@ -92,6 +99,13 @@ static void oled_display_update_ir_icon(bool active) {
                                          icon, 8, 8, false));
 }
 
+static void oled_display_update_time(const char* time_text) {
+  ESP_ERROR_CHECK(ssd1306_display_image(s_display_handle, 0, 0,
+                                        BLANK_TIME_8X40,
+                                        sizeof(BLANK_TIME_8X40)));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 0, time_text, false));
+}
+
 static void oled_display_update_temperature(int temperature_c) {
   char line[16];
 
@@ -124,16 +138,31 @@ static void oled_display_update_led_color(const char* color_code) {
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 4, line, false));
 }
 
+static void oled_display_update_ir_command(const char* command) {
+  char line[16];
+
+  snprintf(line, sizeof(line), "IR: %s", command);
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 5, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 5, line, false));
+}
+
+static void oled_display_show_boot_screen(void) {
+  ESP_ERROR_CHECK(ssd1306_clear_display(s_display_handle, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 1, "IOT Garden", false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 3, "Booting...", false));
+}
+
 // render all elements on the screen
 static void oled_display_render_full(const garden_state_t* state) {
   ESP_ERROR_CHECK(ssd1306_clear_display(s_display_handle, false));
-  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 0, "12:45", false));
+  oled_display_update_time(state->time_text);
   oled_display_update_ir_icon(true);
   oled_display_update_light_icon(state->ambient_light_detected);
   oled_display_update_temperature(state->temperature_c);
   oled_display_update_soil_raw(state->soil_raw);
   oled_display_update_water_level(state->water_level_percent);
   oled_display_update_led_color(state->led_color_code);
+  oled_display_update_ir_command(state->ir_command);
 }
 
 static void oled_display_task(void* arg) {
@@ -144,20 +173,44 @@ static void oled_display_task(void* arg) {
   int last_temperature_c = state.temperature_c;
   int last_soil_raw = state.soil_raw;
   int last_water_level_percent = state.water_level_percent;
+  unsigned int last_ir_activity_count = state.ir_activity_count;
+  char last_time_text[GARDEN_TIME_TEXT_MAX_LEN];
   char last_led_color_code[GARDEN_LED_COLOR_CODE_MAX_LEN];
-  bool ir_active = true;
+  char last_ir_command[GARDEN_IR_COMMAND_MAX_LEN];
+  bool ir_active = false;
+  int ir_icon_hold_ms = 0;
   int full_refresh_count = 0;
 
+  strncpy(last_time_text, state.time_text, sizeof(last_time_text));
+  last_time_text[sizeof(last_time_text) - 1] = '\0';
   strncpy(last_led_color_code, state.led_color_code, sizeof(last_led_color_code));
   last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
+  strncpy(last_ir_command, state.ir_command, sizeof(last_ir_command));
+  last_ir_command[sizeof(last_ir_command) - 1] = '\0';
 
   oled_display_init();
+  oled_display_show_boot_screen();
+  vTaskDelay(pdMS_TO_TICKS(OLED_BOOT_SPLASH_MS));
   oled_display_render_full(&state);
+  oled_display_update_ir_icon(false);
 
   while (true) {
     vTaskDelay(pdMS_TO_TICKS(OLED_STATE_POLL_MS));
 
     state = garden_state_get();
+    if (state.ir_activity_count != last_ir_activity_count) {
+      ir_active = true;
+      ir_icon_hold_ms = OLED_IR_ICON_HOLD_MS;
+      oled_display_update_ir_icon(true);
+      last_ir_activity_count = state.ir_activity_count;
+    }
+
+    if (strncmp(state.time_text, last_time_text, sizeof(last_time_text)) != 0) {
+      oled_display_update_time(state.time_text);
+      strncpy(last_time_text, state.time_text, sizeof(last_time_text));
+      last_time_text[sizeof(last_time_text) - 1] = '\0';
+    }
+
     if (state.ambient_light_detected != last_ambient_light) {
       oled_display_update_light_icon(state.ambient_light_detected);
       last_ambient_light = state.ambient_light_detected;
@@ -186,9 +239,19 @@ static void oled_display_task(void* arg) {
       last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
     }
 
+    if (strncmp(state.ir_command, last_ir_command, sizeof(last_ir_command)) !=
+        0) {
+      oled_display_update_ir_command(state.ir_command);
+      strncpy(last_ir_command, state.ir_command, sizeof(last_ir_command));
+      last_ir_command[sizeof(last_ir_command) - 1] = '\0';
+    }
+
     if (ir_active) {
-      ir_active = false;
-      oled_display_update_ir_icon(ir_active);
+      ir_icon_hold_ms -= OLED_STATE_POLL_MS;
+      if (ir_icon_hold_ms <= 0) {
+        ir_active = false;
+        oled_display_update_ir_icon(false);
+      }
     }
 
     full_refresh_count++;

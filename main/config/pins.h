@@ -16,6 +16,28 @@
 // DHT11 sensor data pin.
 #define DHT11_DATA_GPIO 27
 
+// IR receiver output pin.
+#define IR_RECEIVER_GPIO 26
+
+// IR remote NEC codes.
+#define IR_CODE_1 0xBA45FF00UL
+#define IR_CODE_2 0xB946FF00UL
+#define IR_CODE_3 0xB847FF00UL
+#define IR_CODE_4 0xBB44FF00UL
+#define IR_CODE_5 0xBF40FF00UL
+#define IR_CODE_6 0xBC43FF00UL
+#define IR_CODE_7 0xF807FF00UL
+#define IR_CODE_8 0xEA15FF00UL
+#define IR_CODE_9 0xF609FF00UL
+#define IR_CODE_STAR 0xE916FF00UL
+#define IR_CODE_0 0xE619FF00UL
+#define IR_CODE_HASH 0xF20DFF00UL
+#define IR_CODE_UP 0xE718FF00UL
+#define IR_CODE_LEFT 0xF708FF00UL
+#define IR_CODE_DOWN 0xAD52FF00UL
+#define IR_CODE_RIGHT 0xA55AFF00UL
+#define IR_CODE_OK 0xE31CFF00UL
+
 // Water pump control pin.
 #define WATER_PUMP_GPIO 4
 
@@ -23,6 +45,11 @@
 #define W2812B_GPIO 5
 #define W2812B_LED_COUNT 25
 #define W2812B_BRIGHTNESS 1
+
+// DS1302 RTC pins.
+#define DS1302_CLK_GPIO 18
+#define DS1302_DAT_GPIO 19
+#define DS1302_RST_GPIO 23
 
 // Capacitive soil moisture sensor v2 analog output pin.
 #define SOIL_SENSOR_ADC_CHANNEL ADC_CHANNEL_5  //  GPIO 33

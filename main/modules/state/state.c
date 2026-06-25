@@ -32,8 +32,13 @@ void garden_state_init(void) {
   s_state.temperature_c = 0;
   s_state.soil_raw = 0;
   s_state.water_level_percent = 0;
+  s_state.ir_activity_count = 0;
+  strncpy(s_state.time_text, "--:--", sizeof(s_state.time_text));
+  s_state.time_text[sizeof(s_state.time_text) - 1] = '\0';
   strncpy(s_state.led_color_code, "OFF", sizeof(s_state.led_color_code));
   s_state.led_color_code[sizeof(s_state.led_color_code) - 1] = '\0';
+  strncpy(s_state.ir_command, "NONE", sizeof(s_state.ir_command));
+  s_state.ir_command[sizeof(s_state.ir_command) - 1] = '\0';
   unlock_state();
 }
 
@@ -71,9 +76,29 @@ void garden_state_set_water_level(int water_level_percent) {
   unlock_state();
 }
 
+void garden_state_set_time_text(const char* time_text) {
+  lock_state();
+  strncpy(s_state.time_text, time_text, sizeof(s_state.time_text));
+  s_state.time_text[sizeof(s_state.time_text) - 1] = '\0';
+  unlock_state();
+}
+
 void garden_state_set_led_color_code(const char* color_code) {
   lock_state();
   strncpy(s_state.led_color_code, color_code, sizeof(s_state.led_color_code));
   s_state.led_color_code[sizeof(s_state.led_color_code) - 1] = '\0';
+  unlock_state();
+}
+
+void garden_state_set_ir_command(const char* command) {
+  lock_state();
+  strncpy(s_state.ir_command, command, sizeof(s_state.ir_command));
+  s_state.ir_command[sizeof(s_state.ir_command) - 1] = '\0';
+  unlock_state();
+}
+
+void garden_state_mark_ir_activity(void) {
+  lock_state();
+  s_state.ir_activity_count++;
   unlock_state();
 }
