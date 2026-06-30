@@ -1,5 +1,6 @@
 #include "ir_remote.h"
 
+#include "control.h"
 #include "driver/rmt_rx.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -7,9 +8,6 @@
 #include "freertos/task.h"
 #include "ir_codes.h"
 #include "pins.h"
-#include "state.h"
-#include "water_pump.h"
-#include "w2812b.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -204,16 +202,8 @@ static void ir_remote_task(void* arg) {
         }
 
         last_command_tick = now;
-        garden_state_set_ir_command(command_name);
-        garden_state_mark_ir_activity();
-        if (raw_code == IR_CODE_LEFT) {
-          w2812b_cycle_left();
-        } else if (raw_code == IR_CODE_RIGHT) {
-          w2812b_cycle_right();
-        } else if (raw_code == IR_CODE_OK) {
-          w2812b_toggle_enabled();
-        } else if (raw_code == IR_CODE_STAR) {
-          water_pump_trigger();
+        if (!control_submit_ir_command(raw_code, command_name)) {
+          ESP_LOGW(TAG, "control rejected command %s", command_name);
         }
         ESP_LOGI(TAG,
                  "Button=%s NEC code=0x%08lX addr=0x%02X addr_inv=0x%02X "
