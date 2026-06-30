@@ -1,6 +1,7 @@
 #include "w2812b.h"
 
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
 #include "led_strip.h"
 #include "led_strip_rmt.h"
 #include "pins.h"
@@ -21,8 +22,25 @@ static const w2812b_color_t W2812B_COLORS[] = {
     {.red = 255, .green = 0, .blue = 0, .color_code = "RED"},
     {.red = 0, .green = 0, .blue = 255, .color_code = "BLUE"},
 };
+enum {
+  W2812B_CHANGE_COOLDOWN_MS = 250,
+};
+
 static int s_color_index = 0;
 static bool s_enabled = true;
+static TickType_t s_last_change_tick;
+
+static bool w2812b_can_change_now(void) {
+  TickType_t now = xTaskGetTickCount();
+
+  if (s_last_change_tick != 0 &&
+      (now - s_last_change_tick) < pdMS_TO_TICKS(W2812B_CHANGE_COOLDOWN_MS)) {
+    return false;
+  }
+
+  s_last_change_tick = now;
+  return true;
+}
 
 static uint8_t apply_brightness(uint8_t value) {
   if (value == 0 || W2812B_BRIGHTNESS == 0) {
@@ -90,6 +108,10 @@ void w2812b_set_color(uint8_t red, uint8_t green, uint8_t blue,
 }
 
 void w2812b_cycle_left(void) {
+  if (!w2812b_can_change_now()) {
+    return;
+  }
+
   s_color_index--;
   if (s_color_index < 0) {
     s_color_index = (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0])) - 1;
@@ -99,6 +121,10 @@ void w2812b_cycle_left(void) {
 }
 
 void w2812b_cycle_right(void) {
+  if (!w2812b_can_change_now()) {
+    return;
+  }
+
   s_color_index++;
   if (s_color_index >=
       (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0]))) {
@@ -109,6 +135,10 @@ void w2812b_cycle_right(void) {
 }
 
 void w2812b_toggle_enabled(void) {
+  if (!w2812b_can_change_now()) {
+    return;
+  }
+
   s_enabled = !s_enabled;
   w2812b_apply_color_index();
 }
@@ -117,5 +147,6 @@ void w2812b_start(void) {
   w2812b_init();
   s_color_index = 0;
   s_enabled = true;
+  s_last_change_tick = 0;
   w2812b_apply_color_index();
 }

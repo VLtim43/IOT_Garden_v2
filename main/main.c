@@ -12,10 +12,10 @@
 void app_main(void) {
   garden_state_init();
 
-  // sensor_dht_start();
-  // sensor_light_start();
-  // sensor_soil_start();
-  // sensor_water_start();
+  sensor_dht_start();
+  sensor_light_start();
+  sensor_soil_start();
+  sensor_water_start();
   clock_start();
   w2812b_start();
   water_pump_init();

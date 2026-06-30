@@ -24,7 +24,7 @@
 #define WATER_PUMP_GPIO 4
 
 // WS2812B LED strip control pin.
-#define W2812B_GPIO 5
+#define W2812B_GPIO 14
 
 #define W2812B_LED_COUNT 25
 #define W2812B_BRIGHTNESS 1

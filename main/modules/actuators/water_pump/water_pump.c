@@ -10,7 +10,7 @@
 static const char* TAG = "WATER_PUMP";
 
 enum {
-  WATER_PUMP_ON_MS = 3000,
+  WATER_PUMP_ON_MS = 1500,
   WATER_PUMP_COOLDOWN_MS = 2000,
 };
 
