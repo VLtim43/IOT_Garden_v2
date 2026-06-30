@@ -109,15 +109,15 @@ The shared state is a single mutex-protected `garden_state_t` struct. Producers 
                                           │
               ┌───────────────────────────┼───────────────────────────┐
               │                           │                           │
-      ┌───────┴────────┐          ┌───────┴────────┐          ┌───────┴────────┐
-      │    Producers    │          │    Readers     │          │ Status Writers  │
-      ├─────────────────┤          ├────────────────┤          ├─────────────────┤
+      ┌───────┴─────────┐          ┌──────┴─────────┐          ┌──────┴───────────┐
+      │    Producers    │          │    Readers     │          │ Status Writers   │
+      ├─────────────────┤          ├────────────────┤          ├──────────────────┤
       │ DHT task        │          │ Control task   │          │ LED module       │
       │ Soil task       │          │ OLED task      │          │ Pump module      │
       │ Water task      │          │                │          │ IR handler       │
       │ Light task      │          │                │          │ RTC task         │
       │ RTC task        │          │                │          │ Sensor tasks     │
-      └─────────────────┘          └────────────────┘          └─────────────────┘
+      └─────────────────┘          └────────────────┘          └──────────────────┘
 ```
 
 ## State Data Flow
