@@ -138,20 +138,28 @@ static void oled_display_update_led_color(const char* color_code) {
   ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 4, line, false));
 }
 
+static void oled_display_update_rgb_led_color(const char* color_code) {
+  char line[16];
+
+  snprintf(line, sizeof(line), "RGB: %s", color_code);
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 5, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 5, line, false));
+}
+
 static void oled_display_update_ir_command(const char* command) {
   char line[16];
 
   snprintf(line, sizeof(line), "IR: %s", command);
-  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 5, false));
-  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 5, line, false));
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 6, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 6, line, false));
 }
 
 static void oled_display_update_pump_status(const char* status) {
   char line[16];
 
   snprintf(line, sizeof(line), "Pump: %s", status);
-  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 6, false));
-  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 6, line, false));
+  ESP_ERROR_CHECK(ssd1306_clear_display_page(s_display_handle, 7, false));
+  ESP_ERROR_CHECK(ssd1306_display_text(s_display_handle, 7, line, false));
 }
 
 static void oled_display_show_boot_screen(void) {
@@ -170,6 +178,7 @@ static void oled_display_render_full(const garden_state_t* state) {
   oled_display_update_soil_raw(state->soil_raw);
   oled_display_update_water_level(state->water_level_percent);
   oled_display_update_led_color(state->led_color_code);
+  oled_display_update_rgb_led_color(state->rgb_led_color_code);
   oled_display_update_ir_command(state->ir_command);
   oled_display_update_pump_status(state->pump_status);
 }
@@ -185,6 +194,7 @@ static void oled_display_task(void* arg) {
   unsigned int last_ir_activity_count = state.ir_activity_count;
   char last_time_text[GARDEN_TIME_TEXT_MAX_LEN];
   char last_led_color_code[GARDEN_LED_COLOR_CODE_MAX_LEN];
+  char last_rgb_led_color_code[GARDEN_LED_COLOR_CODE_MAX_LEN];
   char last_ir_command[GARDEN_IR_COMMAND_MAX_LEN];
   char last_pump_status[GARDEN_PUMP_STATUS_MAX_LEN];
   bool ir_active = false;
@@ -195,6 +205,9 @@ static void oled_display_task(void* arg) {
   last_time_text[sizeof(last_time_text) - 1] = '\0';
   strncpy(last_led_color_code, state.led_color_code, sizeof(last_led_color_code));
   last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
+  strncpy(last_rgb_led_color_code, state.rgb_led_color_code,
+          sizeof(last_rgb_led_color_code));
+  last_rgb_led_color_code[sizeof(last_rgb_led_color_code) - 1] = '\0';
   strncpy(last_ir_command, state.ir_command, sizeof(last_ir_command));
   last_ir_command[sizeof(last_ir_command) - 1] = '\0';
   strncpy(last_pump_status, state.pump_status, sizeof(last_pump_status));
@@ -249,6 +262,14 @@ static void oled_display_task(void* arg) {
       strncpy(last_led_color_code, state.led_color_code,
               sizeof(last_led_color_code));
       last_led_color_code[sizeof(last_led_color_code) - 1] = '\0';
+    }
+
+    if (strncmp(state.rgb_led_color_code, last_rgb_led_color_code,
+                sizeof(last_rgb_led_color_code)) != 0) {
+      oled_display_update_rgb_led_color(state.rgb_led_color_code);
+      strncpy(last_rgb_led_color_code, state.rgb_led_color_code,
+              sizeof(last_rgb_led_color_code));
+      last_rgb_led_color_code[sizeof(last_rgb_led_color_code) - 1] = '\0';
     }
 
     if (strncmp(state.ir_command, last_ir_command, sizeof(last_ir_command)) !=

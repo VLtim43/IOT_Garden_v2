@@ -3,6 +3,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "pins.h"
+#include "state.h"
 
 #include <stdbool.h>
 
@@ -10,6 +11,28 @@ static const char* TAG = "RGB_LED";
 
 static void rgb_led_set_channel(gpio_num_t gpio, bool enabled) {
   ESP_ERROR_CHECK(gpio_set_level(gpio, enabled ? 1 : 0));
+}
+
+static const char* rgb_led_color_code(rgb_led_color_t color) {
+  switch (color) {
+    case RGB_LED_COLOR_RED:
+      return "RED";
+    case RGB_LED_COLOR_GREEN:
+      return "GREEN";
+    case RGB_LED_COLOR_BLUE:
+      return "BLUE";
+    case RGB_LED_COLOR_YELLOW:
+      return "YELLOW";
+    case RGB_LED_COLOR_MAGENTA:
+      return "MAGNTA";
+    case RGB_LED_COLOR_CYAN:
+      return "CYAN";
+    case RGB_LED_COLOR_WHITE:
+      return "WHITE";
+    case RGB_LED_COLOR_OFF:
+    default:
+      return "OFF";
+  }
 }
 
 void rgb_led_init(void) {
@@ -69,4 +92,5 @@ void rgb_led_set_color(rgb_led_color_t color) {
   rgb_led_set_channel(RGB_LED_RED_GPIO, red);
   rgb_led_set_channel(RGB_LED_GREEN_GPIO, green);
   rgb_led_set_channel(RGB_LED_BLUE_GPIO, blue);
+  garden_state_set_rgb_led_color_code(rgb_led_color_code(color));
 }
