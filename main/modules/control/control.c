@@ -22,6 +22,7 @@ static const char* TAG = "CONTROL";
 enum {
   CONTROL_ACTION_QUEUE_LEN = 8,
   CONTROL_LOOP_INTERVAL_MS = 250,
+  CONTROL_AUTOMATION_STARTUP_DELAY_MS = 6000,
 };
 
 typedef enum {
@@ -192,6 +193,7 @@ static void control_queue_automation_actions(const garden_state_t* state) {
 
 static void control_task(void* arg) {
   (void)arg;
+  TickType_t started_tick = xTaskGetTickCount();
 
   while (true) {
     control_request_t request;
@@ -202,6 +204,11 @@ static void control_task(void* arg) {
     }
 
     // no queued work, poll automation rules
+    if ((xTaskGetTickCount() - started_tick) <
+        pdMS_TO_TICKS(CONTROL_AUTOMATION_STARTUP_DELAY_MS)) {
+      continue;
+    }
+
     garden_state_t state = garden_state_get();
     control_queue_automation_actions(&state);
   }

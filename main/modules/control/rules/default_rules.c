@@ -63,7 +63,7 @@ Example rule template with field meanings:
 // Central rule list for built-in automation defaults.
 static const automation_rule_t DEFAULT_RULES[] = {
     {
-        // Demo rule: very low reservoir triggers a short buzzer alarm.
+        // Demo rule: empty reservoir triggers a short buzzer alarm.
         .enabled = true,
         .edge_triggered = true,
         .condition_mode = AUTOMATION_CONDITIONS_ALL,
@@ -72,8 +72,8 @@ static const automation_rule_t DEFAULT_RULES[] = {
                 {
                     .enabled = true,
                     .field = AUTOMATION_FIELD_WATER_LEVEL_PERCENT,
-                    .op = AUTOMATION_OP_LT,
-                    .value = 5,
+                    .op = AUTOMATION_OP_EQ,
+                    .value = 0,
                 },
             },
         .action =
