@@ -1,6 +1,7 @@
 #include "control.h"
 
 #include "automation.h"
+#include "buzzer.h"
 #include "default_rules.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -46,6 +47,40 @@ typedef struct {
 // shared queue for IR and automation actions
 static QueueHandle_t s_control_queue;
 
+static void control_handle_ir_rgb_color(uint32_t raw_code) {
+  switch (raw_code) {
+    case IR_CODE_1:
+      rgb_led_set_color(RGB_LED_COLOR_RED);
+      return;
+    case IR_CODE_2:
+      rgb_led_set_color(RGB_LED_COLOR_GREEN);
+      return;
+    case IR_CODE_3:
+      rgb_led_set_color(RGB_LED_COLOR_BLUE);
+      return;
+    case IR_CODE_4:
+      rgb_led_set_color(RGB_LED_COLOR_YELLOW);
+      return;
+    case IR_CODE_5:
+      rgb_led_set_color(RGB_LED_COLOR_MAGENTA);
+      return;
+    case IR_CODE_6:
+      rgb_led_set_color(RGB_LED_COLOR_CYAN);
+      return;
+    case IR_CODE_7:
+      rgb_led_set_color(RGB_LED_COLOR_WHITE);
+      return;
+    case IR_CODE_8:
+      rgb_led_set_color(RGB_LED_COLOR_OFF);
+      return;
+    case IR_CODE_9:
+      rgb_led_set_color(RGB_LED_COLOR_RED);
+      return;
+    default:
+      return;
+  }
+}
+
 static void control_configure_default_rules(void) {
   size_t rule_count = 0;
   const automation_rule_t* rules = default_rules_get(&rule_count);
@@ -79,6 +114,9 @@ static void control_apply_automation_action(const automation_action_t* action) {
     case AUTOMATION_ACTION_RGB_LED_SET_COLOR:
       rgb_led_set_color((rgb_led_color_t)action->arg0);
       return;
+    case AUTOMATION_ACTION_BUZZER_TRIPLE:
+      buzzer_buzz_triple();
+      return;
     case AUTOMATION_ACTION_NONE:
     default:
       return;
@@ -90,6 +128,8 @@ static void control_handle_ir_request(const control_request_t* request) {
 
   garden_state_set_ir_command(request->payload.ir.command_name);
   garden_state_mark_ir_activity();
+
+  control_handle_ir_rgb_color(raw_code);
 
   switch (raw_code) {
     case IR_CODE_LEFT:

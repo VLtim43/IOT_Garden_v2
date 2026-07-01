@@ -51,7 +51,7 @@ Example rule template with field meanings:
         },
     .action =
         {
-            .type = AUTOMATION_ACTION_LED_SET_COLOR, // Supported actions: NONE, PUMP_PULSE, LED_CYCLE_LEFT, LED_CYCLE_RIGHT, LED_TOGGLE, LED_SET_COLOR, RGB_LED_SET_COLOR.
+            .type = AUTOMATION_ACTION_LED_SET_COLOR, // Supported actions: NONE, PUMP_PULSE, LED_CYCLE_LEFT, LED_CYCLE_RIGHT, LED_TOGGLE, LED_SET_COLOR, RGB_LED_SET_COLOR, BUZZER_TRIPLE.
             .arg0 = 1, // Meaning depends on action type. For LED_SET_COLOR: palette index 0=PURPL, 1=RED, 2=BLUE.
             .arg1 = 0, // Spare argument for future action-specific data.
         },
@@ -62,6 +62,26 @@ Example rule template with field meanings:
 
 // Central rule list for built-in automation defaults.
 static const automation_rule_t DEFAULT_RULES[] = {
+    {
+        // Demo rule: empty reservoir triggers a short buzzer alarm.
+        .enabled = true,
+        .edge_triggered = true,
+        .condition_mode = AUTOMATION_CONDITIONS_ALL,
+        .conditions =
+            {
+                {
+                    .enabled = true,
+                    .field = AUTOMATION_FIELD_WATER_LEVEL_PERCENT,
+                    .op = AUTOMATION_OP_EQ,
+                    .value = 0,
+                },
+            },
+        .action =
+            {
+                .type = AUTOMATION_ACTION_BUZZER_TRIPLE,
+            },
+        .priority = 30,
+    },
     {
         // Demo rule: cover the light sensor and the RGB LED turns red.
         .enabled = true,

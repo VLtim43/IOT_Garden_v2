@@ -23,6 +23,9 @@
 // Water pump control pin.
 #define WATER_PUMP_GPIO 4
 
+// Active buzzer control pin.
+#define BUZZER_GPIO 5
+
 // WS2812B LED strip control pin.
 #define W2812B_GPIO 14
 

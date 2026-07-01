@@ -1,6 +1,7 @@
 #include "clock.h"
 #include "control.h"
 #include "OLED_display.h"
+#include "buzzer.h"
 #include "ir_remote.h"
 #include "rgb_led.h"
 #include "sensor_dht.h"
@@ -26,6 +27,7 @@ void app_main(void) {
   // actuators start
   w2812b_start();
   water_pump_init();
+  buzzer_init();
   rgb_led_init();
 
   // control start

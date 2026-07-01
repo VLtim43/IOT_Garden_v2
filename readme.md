@@ -19,10 +19,12 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - NEC IR remote input and manual control
 - WS2812B LED panel control
 - Simple RGB demo LED actuator control
+- Buzzer alarm output
 - Water pump pulse control with cooldown protection
 - Queue-based control task for manual and automation actions
 - Default time-and-light-based LED automation rules
 - Demo-friendly light-triggered RGB automation rules
+- Low-water buzzer alarm rule
 
 ## Current Behavior
 
@@ -32,6 +34,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - The control task handles manual commands and polls automation rules.
 - Default automation rules switch LEDs to `RED` at night after `18:00`, and back to `PURPL` during day after `06:00`.
 - Demo RGB rules switch the discrete RGB LED to `RED` when light is blocked and `GREEN` when light is detected.
+- Low-water rule buzzes the buzzer three times when water level reaches `0%`.
 - Actuator modules apply LED and pump changes, then write visible status back into shared state.
 - The OLED task reads shared state and redraws only changed fields.
 
@@ -41,6 +44,15 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - `RIGHT`: cycle LED color right
 - `OK`: toggle LED panel on or off
 - `STAR`: trigger pump pulse
+- `1`: RGB LED `RED`
+- `2`: RGB LED `GREEN`
+- `3`: RGB LED `BLUE`
+- `4`: RGB LED `YELLOW`
+- `5`: RGB LED `MAGENTA`
+- `6`: RGB LED `CYAN`
+- `7`: RGB LED `WHITE`
+- `8`: RGB LED `OFF`
+- `9`: RGB LED `RED` again
 
 ## OLED Screen
 
@@ -64,6 +76,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - DS1302 RTC
 - WS2812B 25-LED panel
 - Simple RGB LED on three GPIO outputs
+- Active buzzer on one GPIO output
 - Small water pump
 
 ## Pin Map
@@ -72,6 +85,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - DHT11: `GPIO27`
 - IR receiver: `GPIO26`
 - Water pump control: `GPIO4`
+- Buzzer: `GPIO5`
 - WS2812B data: `GPIO14`
 - RGB LED: `BLUE=GPIO13`, `GREEN=GPIO25`, `RED=GPIO32`
 - DS1302 RTC: `CLK=GPIO18`, `DAT=GPIO19`, `RST=GPIO21`
@@ -129,12 +143,14 @@ Core modules:
 - `control/`: action queue and automation evaluation
 - `control/rules/`: built-in automation rule definitions
 - `actuators/`: WS2812B, discrete RGB LED, and water pump logic
+- `actuators/`: WS2812B, discrete RGB LED, buzzer, and water pump logic
 - `display/`: OLED rendering
 
 ## Default Automation Rules
 
 - Night rule: if ambient light is not detected and time is `>= 18:00`, set LED color to `RED`
 - Day rule: if ambient light is detected and time is `>= 06:00`, set LED color to `PURPL`
+- Empty-water rule: if water level is `0%`, buzz three times
 - Demo RGB night rule: if ambient light is not detected, set RGB LED to `RED`
 - Demo RGB day rule: if ambient light is detected, set RGB LED to `GREEN`
 - Fixed-color automation uses the same LED palette as manual IR control: `PURPL`, `RED`, `BLUE`
