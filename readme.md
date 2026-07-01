@@ -126,24 +126,20 @@ Core modules:
 ## Control Flow
 
 ```text
-                  ┌─────────────────┐
-                  │    IR Remote    │
-                  └────────┬────────┘
-                           │
-                           v
-                  ┌─────────────────┐
-                  │   ir_remote.c   │
-                  └────────┬────────┘
-                           │
-                           v
+
+                    ┌─────────────────┐
+                    │   IR Remote     │
+                    └────────┬────────┘
+                             │
+                             v
 ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
 │  Shared State   │->│ Automation Eval │->│  Control Queue  │->│  Control Task   │
 └────────┬────────┘  └─────────────────┘  └────────┬────────┘  └────────┬────────┘
-         │                                          ^                    │
-         └──────────────────────────────────────────┘                    v
-                                                                   ┌─────────────────┐
-                                                                   │ LED / Pump Act. │
-                                                                   └─────────────────┘
+         │                                         ^                    │
+         └─────────────────────────────────────────┘                    v
+                                                               ┌─────────────────┐
+                                                               │ LED / Pump Act. │
+                                                               └─────────────────┘
 ```
 
 ## Repository Layout
@@ -191,9 +187,3 @@ idf.py flash monitor
 - ESP32 and external `5 V` supply must share common ground.
 - Do not drive pump directly from an ESP32 GPIO. Use a transistor, MOSFET, relay, or motor driver.
 - If the LED panel needs a stronger data signal, use level shifting.
-
-## Status Notes
-
-- Automation engine exists in firmware and is evaluated by the control task.
-- No user-facing rule configuration is documented in this repository yet.
-- Current README reflects code currently present under `main/`.
