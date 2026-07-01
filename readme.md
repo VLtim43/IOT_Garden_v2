@@ -77,6 +77,34 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 All modules communicate through shared garden state.
 
 ```text
+                           ┌──────────────────────────────┐
+                           │        garden_state_t        │
+                           ├──────────────────────────────┤
+                           │ ambient_light_detected       │
+                           │ temperature_c                │
+                           │ soil_raw                     │
+                           │ water_level_percent          │
+                           │ ir_activity_count            │
+                           │ time_text                    │
+                           │ led_color_code               │
+                           │ ir_command                   │
+                           │ pump_status                  │
+                           └──────────────┬───────────────┘
+                                          │
+              ┌───────────────────────────┼───────────────────────────┐
+              │                           │                           │
+      ┌───────┴─────────┐          ┌──────┴─────────┐          ┌──────┴───────────┐
+      │    Producers    │          │    Readers     │          │ Status Writers   │
+      ├─────────────────┤          ├────────────────┤          ├──────────────────┤
+      │ DHT task        │          │ Control task   │          │ LED module       │
+      │ Soil task       │          │ OLED task      │          │ Pump module      │
+      │ Water task      │          │                │          │ IR handler       │
+      │ Light task      │          │                │          │ RTC task         │
+      │ RTC task        │          │                │          │ Sensor tasks     │
+      └─────────────────┘          └────────────────┘          └──────────────────┘
+```
+
+```text
 Hardware
   -> Sensor / RTC tasks
   -> Shared garden state
@@ -94,6 +122,29 @@ Core modules:
 - `control/`: action queue and automation evaluation
 - `actuators/`: WS2812B and water pump logic
 - `display/`: OLED rendering
+
+## Control Flow
+
+```text
+                  ┌─────────────────┐
+                  │    IR Remote    │
+                  └────────┬────────┘
+                           │
+                           v
+                  ┌─────────────────┐
+                  │   ir_remote.c   │
+                  └────────┬────────┘
+                           │
+                           v
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Shared State   │->│ Automation Eval │->│  Control Queue  │->│  Control Task   │
+└────────┬────────┘  └─────────────────┘  └────────┬────────┘  └────────┬────────┘
+         │                                          ^                    │
+         └──────────────────────────────────────────┘                    v
+                                                                   ┌─────────────────┐
+                                                                   │ LED / Pump Act. │
+                                                                   └─────────────────┘
+```
 
 ## Repository Layout
 
