@@ -7,6 +7,7 @@ void w2812b_start(void);
 void w2812b_set_all(uint8_t red, uint8_t green, uint8_t blue);
 void w2812b_set_color(uint8_t red, uint8_t green, uint8_t blue,
                       const char* color_code);
+void w2812b_set_color_index(int index);
 void w2812b_cycle_left(void);
 void w2812b_cycle_right(void);
 void w2812b_toggle_enabled(void);

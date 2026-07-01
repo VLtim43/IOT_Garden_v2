@@ -19,6 +19,10 @@ static const char* TAG = "CONTROL";
 enum {
   CONTROL_ACTION_QUEUE_LEN = 8,
   CONTROL_LOOP_INTERVAL_MS = 250,
+  CONTROL_TIME_6PM_MINUTES = 18 * 60,
+  CONTROL_TIME_6AM_MINUTES = 6 * 60,
+  CONTROL_LED_COLOR_PURPLE = 0,
+  CONTROL_LED_COLOR_RED = 1,
 };
 
 typedef enum {
@@ -44,6 +48,67 @@ typedef struct {
 // shared queue for IR and automation actions
 static QueueHandle_t s_control_queue;
 
+static void control_configure_default_rules(void) {
+  // Night rule: after 18:00 and with no ambient light, force LEDs to red.
+  automation_rule_t night_rule = {
+      .enabled = true,
+      .edge_triggered = true,
+      .condition_mode = AUTOMATION_CONDITIONS_ALL,
+      .conditions =
+          {
+              {
+                  .enabled = true,
+                  .field = AUTOMATION_FIELD_AMBIENT_LIGHT,
+                  .op = AUTOMATION_OP_EQ,
+                  .value = 0,
+              },
+              {
+                  .enabled = true,
+                  .field = AUTOMATION_FIELD_TIME_MINUTES,
+                  .op = AUTOMATION_OP_GTE,
+                  .value = CONTROL_TIME_6PM_MINUTES,
+              },
+          },
+      .action =
+          {
+              .type = AUTOMATION_ACTION_LED_SET_COLOR,
+              .arg0 = CONTROL_LED_COLOR_RED,
+          },
+      .priority = 10,
+  };
+
+  // Day rule: after 06:00 and with ambient light present, restore default purple.
+  automation_rule_t day_rule = {
+      .enabled = true,
+      .edge_triggered = true,
+      .condition_mode = AUTOMATION_CONDITIONS_ALL,
+      .conditions =
+          {
+              {
+                  .enabled = true,
+                  .field = AUTOMATION_FIELD_AMBIENT_LIGHT,
+                  .op = AUTOMATION_OP_EQ,
+                  .value = 1,
+              },
+              {
+                  .enabled = true,
+                  .field = AUTOMATION_FIELD_TIME_MINUTES,
+                  .op = AUTOMATION_OP_GTE,
+                  .value = CONTROL_TIME_6AM_MINUTES,
+              },
+          },
+      .action =
+          {
+              .type = AUTOMATION_ACTION_LED_SET_COLOR,
+              .arg0 = CONTROL_LED_COLOR_PURPLE,
+          },
+      .priority = 10,
+  };
+
+  automation_set_rule(0, &night_rule);
+  automation_set_rule(1, &day_rule);
+}
+
 static void control_apply_automation_action(const automation_action_t* action) {
   if (action == NULL) {
     return;
@@ -61,6 +126,10 @@ static void control_apply_automation_action(const automation_action_t* action) {
       return;
     case AUTOMATION_ACTION_LED_TOGGLE:
       w2812b_toggle_enabled();
+      return;
+    case AUTOMATION_ACTION_LED_SET_COLOR:
+      // Fixed-color actions let automation choose a specific palette slot.
+      w2812b_set_color_index(action->arg0);
       return;
     case AUTOMATION_ACTION_NONE:
     default:
@@ -153,6 +222,7 @@ void control_start(void) {
   }
 
   automation_init();
+  control_configure_default_rules();
   s_control_queue = xQueueCreate(CONTROL_ACTION_QUEUE_LEN, sizeof(control_request_t));
   if (s_control_queue == NULL) {
     ESP_LOGE(TAG, "failed to create control queue");

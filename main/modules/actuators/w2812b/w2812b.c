@@ -107,6 +107,22 @@ void w2812b_set_color(uint8_t red, uint8_t green, uint8_t blue,
   garden_state_set_led_color_code(color_code);
 }
 
+void w2812b_set_color_index(int index) {
+  int color_count = (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0]));
+  if (index < 0 || index >= color_count) {
+    return;
+  }
+
+  if (!w2812b_can_change_now()) {
+    return;
+  }
+
+  // Automation uses the same palette as manual IR controls.
+  s_color_index = index;
+  s_enabled = true;
+  w2812b_apply_color_index();
+}
+
 void w2812b_cycle_left(void) {
   if (!w2812b_can_change_now()) {
     return;
