@@ -1,45 +1,64 @@
-# IOT Garden V.2
+# IoT Garden v2
+
+ESP32 firmware for a small IoT garden project built with ESP-IDF and C.
+
+It monitors plant and environment data, shows live status on an OLED, accepts IR remote input, and controls a WS2812B LED panel plus a water pump through a shared runtime state.
 
 ![ESP32](https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)
 ![Espressif](https://img.shields.io/badge/espressif-E7352C.svg?style=for-the-badge&logo=espressif&logoColor=white)
 ![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
 
----
+## Firmware Scope
 
-- Soil Humidity Sensor
-- Temp/Humidity Sensor
-- Water Level Sensor
-- Light Sensor
-- Buzzer
-- OLED Screen
-- IR controls
-
-## Current Firmware
-
-- OLED status screen with boot splash
-- DS1302 RTC clock shown on the OLED
-- Soil, water level, temperature, and ambient light sensor tasks
-- WS2812B LED panel control on a 25 LED panel
+- Soil moisture reading with ADC
+- Water reservoir level reading with ADC
+- Temperature reading from DHT11
+- Ambient light detection
+- DS1302 real-time clock display
+- SSD1306 OLED status screen
+- NEC IR remote input and manual control
+- WS2812B LED panel control
 - Water pump pulse control with cooldown protection
-- IR remote logging, button decoding, and manual controls
-- Queue-based control task for IR and automation actions
-- Shared mutex-protected global state used by all runtime tasks
+- Queue-based control task for manual and automation actions
 
-## Current Manual Controls
+## Current Behavior
 
-- `LEFT` and `RIGHT`: cycle LED panel colors `PURPL -> RED -> BLUE`
-- `OK`: toggle LED panel on and off
-- `STAR`: run the water pump for `3 s`, then force `2 s` cooldown
+- `app_main()` initializes shared state, then starts sensor, clock, actuator, control, IR, and OLED modules.
+- Sensor tasks publish readings into a mutex-protected `garden_state_t`.
+- The IR module decodes commands and sends them to the control queue.
+- The control task handles manual commands and polls automation rules.
+- Actuator modules apply LED and pump changes, then write visible status back into shared state.
+- The OLED task reads shared state and redraws only changed fields.
 
-## Current OLED Info
+## Manual IR Controls
 
-- Time from the DS1302 RTC
+- `LEFT`: cycle LED color left
+- `RIGHT`: cycle LED color right
+- `OK`: toggle LED panel on or off
+- `STAR`: trigger pump pulse
+
+## OLED Screen
+
+- RTC time
 - Temperature
 - Soil reading
 - Water level percent
 - Current LED color or `OFF`
-- Last IR command received
-- Pump state: `ON`, `COOLDWN`, or `OFF`
+- Last IR command
+- Pump state
+
+## Hardware Used
+
+- ESP32 development board
+- DHT11 temperature sensor
+- Capacitive soil moisture sensor
+- Water level sensor
+- Light sensor module
+- SSD1306 OLED over I2C
+- IR receiver
+- DS1302 RTC
+- WS2812B 25-LED panel
+- Small water pump
 
 ## Pin Map
 
@@ -51,127 +70,79 @@
 - DS1302 RTC: `CLK=GPIO18`, `DAT=GPIO19`, `RST=GPIO21`
 - Soil sensor ADC: `GPIO33`
 - Water level ADC: `GPIO35`
-- Light sensor DO: `GPIO34`
+- Light sensor digital output: `GPIO34`
 
-## State / Task Setup
+## Architecture
 
-All modules share data through the global garden state. Sensor tasks write new readings into state, actuator tasks update outputs from state, and the display task periodically reads state to draw the OLED UI.
-
-```text
-                                       ┌────────────────┐
-                                       │     State      │
-                                       └───────┬────────┘
-                                               │
-                    ┌──────────────────────────┼──────────────────────────┐
-                    │                          │                          │
-             ┌──────┴───────┐           ┌──────┴───────┐           ┌──────┴───────┐
-             │    Sensor    │           │   Actuator   │           │   Display    │
-             │    Tasks     │           │     Task     │           │    Tasks     │
-             └──────────────┘           └──────────────┘           └──────────────┘
-```
-
-## Runtime Architecture
-
-- `app_main()` initializes the shared state, then starts sensor, clock, control, IR, and OLED tasks.
-- Sensor tasks and the RTC task publish readings into `garden_state_t`.
-- The IR task decodes NEC remote frames and submits commands to the control queue.
-- The control task handles manual IR commands and periodic automation rule evaluation.
-- Actuator modules apply LED and pump changes, then write user-visible status back into shared state.
-- The OLED task polls shared state and only redraws fields that changed.
+All modules communicate through shared garden state.
 
 ```text
 Hardware
   -> Sensor / RTC tasks
   -> Shared garden state
-  -> Control task + automation rules
+  -> Control task + automation evaluation
   -> Actuators
-  -> OLED status display
+  -> OLED display
 ```
 
-## Garden State Layout
-
-The shared state is a single mutex-protected `garden_state_t` struct. Producers write into it, and control and display logic read from it.
-
-```text
-                           ┌──────────────────────────────┐
-                           │        garden_state_t        │
-                           ├──────────────────────────────┤
-                           │ ambient_light_detected       │
-                           │ temperature_c                │
-                           │ soil_raw                     │
-                           │ water_level_percent          │
-                           │ ir_activity_count            │
-                           │ time_text                    │
-                           │ led_color_code               │
-                           │ ir_command                   │
-                           │ pump_status                  │
-                           └──────────────┬───────────────┘
-                                          │
-              ┌───────────────────────────┼───────────────────────────┐
-              │                           │                           │
-      ┌───────┴─────────┐          ┌──────┴─────────┐          ┌──────┴───────────┐
-      │    Producers    │          │    Readers     │          │ Status Writers   │
-      ├─────────────────┤          ├────────────────┤          ├──────────────────┤
-      │ DHT task        │          │ Control task   │          │ LED module       │
-      │ Soil task       │          │ OLED task      │          │ Pump module      │
-      │ Water task      │          │                │          │ IR handler       │
-      │ Light task      │          │                │          │ RTC task         │
-      │ RTC task        │          │                │          │ Sensor tasks     │
-      └─────────────────┘          └────────────────┘          └──────────────────┘
-```
-
-## State Data Flow
-
-- Sensor tasks update live measurements such as temperature, soil, water level, and ambient light.
-- The RTC task updates `time_text` once per second.
-- The IR handler updates `ir_command` and increments `ir_activity_count`.
-- The LED module updates `led_color_code`.
-- The pump module updates `pump_status`.
-- The control task reads a snapshot of state to evaluate automation rules.
-- The OLED task reads a snapshot of state and redraws only fields that changed.
-
-## Control Modules
+Core modules:
 
 - `state/`: mutex-protected shared `garden_state_t`
-- `sensors/`: DHT11, soil ADC, water ADC, light sensor, shared ADC helper
-- `clock/`: DS1302 RTC read loop
-- `input/`: IR receiver using ESP-IDF RMT and NEC decoding
-- `control/`: queue-based command handling and automation rule evaluation
-- `actuators/`: WS2812B LED panel and water pump driver logic
-- `display/`: SSD1306 OLED rendering
+- `sensors/`: DHT11, soil ADC, water ADC, light sensor, ADC helper
+- `clock/`: DS1302 RTC update loop
+- `input/`: IR receiver and NEC decoding
+- `control/`: action queue and automation evaluation
+- `actuators/`: WS2812B and water pump logic
+- `display/`: OLED rendering
 
-## Main Directory Tree
+## Repository Layout
 
 ```text
-main/
+.
 ├── CMakeLists.txt
-├── idf_component.yml
-├── config/
-│   ├── ir_codes.h
-│   └── pins.h
-├── main.c
-└── modules/
-    ├── actuators/
-    │   ├── water_pump/
-    │   │   └── water_pump.c
-    │   └── w2812b/
-    │       └── w2812b.c
-    ├── clock/
-    │   └── clock.c
-    ├── display/
-    │   └── OLED_display.c
-    ├── input/
-    │   └── ir_remote.c
-    ├── sensors/
-    │   ├── adc_shared.c
-    │   ├── sensor_dht/
-    │   │   └── sensor_dht.c
-    │   ├── sensor_light/
-    │   │   └── sensor_light.c
-    │   ├── sensor_soil/
-    │   │   └── sensor_soil.c
-    │   └── sensor_water/
-    │       └── sensor_water.c
-    └── state/
-        └── state.c
+├── dependencies.lock
+├── main/
+│   ├── CMakeLists.txt
+│   ├── config/
+│   │   ├── ir_codes.h
+│   │   └── pins.h
+│   ├── idf_component.yml
+│   ├── main.c
+│   └── modules/
+│       ├── actuators/
+│       ├── clock/
+│       ├── control/
+│       ├── display/
+│       ├── input/
+│       ├── sensors/
+│       └── state/
+└── readme.md
 ```
+
+## Build
+
+ESP-IDF environment required.
+
+```bash
+idf.py build
+```
+
+Flash and monitor when hardware is connected:
+
+```bash
+idf.py flash monitor
+```
+
+## Electrical Notes
+
+- ESP32 GPIO is `3.3 V` logic.
+- WS2812B panel and pump should use a separate `5 V` supply.
+- ESP32 and external `5 V` supply must share common ground.
+- Do not drive pump directly from an ESP32 GPIO. Use a transistor, MOSFET, relay, or motor driver.
+- If the LED panel needs a stronger data signal, use level shifting.
+
+## Status Notes
+
+- Automation engine exists in firmware and is evaluated by the control task.
+- No user-facing rule configuration is documented in this repository yet.
+- Current README reflects code currently present under `main/`.

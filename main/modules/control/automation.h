@@ -68,9 +68,16 @@ typedef struct {
   automation_action_t action;
 } automation_action_request_t;
 
+// clear configured rules and runtime state
 void automation_init(void);
+
+// store one rule in fixed rule table
 bool automation_set_rule(size_t index, const automation_rule_t* rule);
+
+// expose rule table for UI or debugging
 const automation_rule_t* automation_get_rules(size_t* rule_count);
+
+// collect actions for rules matching current state
 size_t automation_evaluate(const garden_state_t* state,
                            automation_action_request_t* requests,
                            size_t max_requests);

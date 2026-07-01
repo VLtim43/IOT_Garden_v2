@@ -41,6 +41,7 @@ typedef struct {
   } payload;
 } control_request_t;
 
+// shared queue for IR and automation actions
 static QueueHandle_t s_control_queue;
 
 static void control_apply_automation_action(const automation_action_t* action) {
@@ -140,6 +141,7 @@ static void control_task(void* arg) {
       continue;
     }
 
+    // no queued work, poll automation rules
     garden_state_t state = garden_state_get();
     control_queue_automation_actions(&state);
   }

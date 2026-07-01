@@ -12,6 +12,7 @@ typedef struct {
   TickType_t last_fire_tick;
 } automation_rule_runtime_t;
 
+// configured rules and per-rule runtime state
 static automation_rule_t s_rules[AUTOMATION_MAX_RULES];
 static automation_rule_runtime_t s_rule_runtime[AUTOMATION_MAX_RULES];
 
@@ -170,6 +171,7 @@ static void automation_insert_request(automation_action_request_t* requests,
 
   size_t insert_index = *request_count;
   const automation_rule_t* new_rule = &s_rules[request->rule_index];
+  // keep higher priority actions first
   for (size_t i = 0; i < *request_count; i++) {
     const automation_rule_t* existing_rule = &s_rules[requests[i].rule_index];
     if (new_rule->priority > existing_rule->priority) {
@@ -211,6 +213,7 @@ size_t automation_evaluate(const garden_state_t* state,
       should_fire = false;
     }
 
+    // enforce minimum gap between repeated actions
     if (should_fire && rule->min_interval_ms > 0 && runtime->last_fire_tick != 0 &&
         (now - runtime->last_fire_tick) < pdMS_TO_TICKS(rule->min_interval_ms)) {
       should_fire = false;
