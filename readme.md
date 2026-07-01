@@ -95,45 +95,6 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 
 ## Architecture
 
-All modules communicate through shared garden state.
-
-```text
-                           ┌──────────────────────────────┐
-                           │        garden_state_t        │
-                           ├──────────────────────────────┤
-                           │ ambient_light_detected       │
-                           │ temperature_c                │
-                           │ soil_raw                     │
-                           │ water_level_percent          │
-                           │ ir_activity_count            │
-                           │ time_text                    │
-                           │ led_color_code               │
-                           │ ir_command                   │
-                           │ pump_status                  │
-                           └──────────────┬───────────────┘
-                                          │
-              ┌───────────────────────────┼───────────────────────────┐
-              │                           │                           │
-      ┌───────┴─────────┐          ┌──────┴─────────┐          ┌──────┴───────────┐
-      │    Producers    │          │    Readers     │          │ Status Writers   │
-      ├─────────────────┤          ├────────────────┤          ├──────────────────┤
-      │ DHT task        │          │ Control task   │          │ LED module       │
-      │ Soil task       │          │ OLED task      │          │ Pump module      │
-      │ Water task      │          │                │          │ IR handler       │
-      │ Light task      │          │                │          │ RTC task         │
-      │ RTC task        │          │                │          │ Sensor tasks     │
-      └─────────────────┘          └────────────────┘          └──────────────────┘
-```
-
-```text
-Hardware
-  -> Sensor / RTC tasks
-  -> Shared garden state
-  -> Control task + automation evaluation
-  -> Actuators
-  -> OLED display
-```
-
 Core modules:
 
 - `state/`: mutex-protected shared `garden_state_t`
@@ -142,7 +103,6 @@ Core modules:
 - `input/`: IR receiver and NEC decoding
 - `control/`: action queue and automation evaluation
 - `control/rules/`: built-in automation rule definitions
-- `actuators/`: WS2812B, discrete RGB LED, and water pump logic
 - `actuators/`: WS2812B, discrete RGB LED, buzzer, and water pump logic
 - `display/`: OLED rendering
 
@@ -160,19 +120,26 @@ Core modules:
 
 ```text
 
-                    ┌─────────────────┐
-                    │   IR Remote     │
-                    └────────┬────────┘
-                             │
-                             v
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│  Shared State   │->│ Automation Eval │->│  Control Queue  │->│  Control Task   │
-└────────┬────────┘  └─────────────────┘  └────────┬────────┘  └────────┬────────┘
-         │                                         ^                    │
-         └─────────────────────────────────────────┘                    v
-                                                               ┌─────────────────┐
-                                                               │ LED / Pump Act. │
-                                                               └─────────────────┘
+┌─────────────────┐                     ┌─────────────────┐
+│    IR Remote    │-------------------->  Control Queue   │
+└─────────────────┘                     └────────┬────────┘
+                                                 │
+                                                 v
+                                        ┌─────────────────┐
+┌─────────────────┐                     │  Control Task   │
+│  Shared State   │<------------------->│                 │
+└────────┬────────┘                     └────────┬────────┘
+         │                                       │
+         │                                       v
+         │                              ┌─────────────────┐
+         └----------------------------->│ Automation Eval │
+                                        └────────┬────────┘
+                                                 │
+                                                 v
+                                        ┌─────────────────┐
+                                        │ LED / Pump /    │
+                                        │ RGB / Buzzer    │
+                                        └─────────────────┘
 ```
 
 ## Repository Layout
