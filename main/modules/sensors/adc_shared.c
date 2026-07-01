@@ -6,6 +6,7 @@
 static adc_oneshot_unit_handle_t s_adc_handle;
 static SemaphoreHandle_t s_adc_mutex;
 
+// ADC1 is shared by multiple sensor tasks, so reads go through one mutex.
 static esp_err_t adc_shared_init(void) {
   if (s_adc_handle != NULL) {
     return ESP_OK;

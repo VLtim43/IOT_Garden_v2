@@ -44,6 +44,7 @@ void water_pump_set_enabled(bool enabled) {
 static void water_pump_pulse_task(void* arg) {
   (void)arg;
 
+  // Keep pulse timing off the control task so queue handling stays responsive.
   vTaskDelay(pdMS_TO_TICKS(WATER_PUMP_ON_MS));
   water_pump_set_enabled(false);
   taskENTER_CRITICAL(&s_pump_lock);
@@ -65,6 +66,7 @@ void water_pump_trigger(void) {
   TickType_t now = xTaskGetTickCount();
   bool cooling_down = false;
 
+  // Reject overlapping pulses and remember cooldown in one critical section.
   taskENTER_CRITICAL(&s_pump_lock);
 
   if (s_pump_active) {

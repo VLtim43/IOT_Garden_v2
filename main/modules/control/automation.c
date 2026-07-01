@@ -28,6 +28,7 @@ static bool automation_parse_time_minutes(const char* time_text,
     return false;
   }
 
+  // Rules compare time as minutes since midnight.
   int hour = ((time_text[0] - '0') * 10) + (time_text[1] - '0');
   int minute = ((time_text[3] - '0') * 10) + (time_text[4] - '0');
   if (hour > 23 || minute > 59) {
@@ -108,6 +109,7 @@ static bool automation_rule_matches(const garden_state_t* state,
     return false;
   }
 
+  // Disabled condition slots are skipped, so each rule can use only what it needs.
   for (size_t i = 0; i < AUTOMATION_MAX_CONDITIONS; i++) {
     const automation_condition_t* condition = &rule->conditions[i];
     if (!condition->enabled) {
@@ -198,6 +200,7 @@ size_t automation_evaluate(const garden_state_t* state,
     return 0;
   }
 
+  // Evaluate every configured rule against the latest state snapshot.
   for (size_t i = 0; i < AUTOMATION_MAX_RULES; i++) {
     automation_rule_t* rule = &s_rules[i];
     automation_rule_runtime_t* runtime = &s_rule_runtime[i];

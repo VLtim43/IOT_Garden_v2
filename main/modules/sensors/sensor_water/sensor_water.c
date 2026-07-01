@@ -65,6 +65,7 @@ static int raw_to_water_level_percent(int raw) {
 static void sensor_water_task(void* arg) {
   (void)arg;
 
+  // Require repeated matching bands before publishing a new level.
   int last_reported_percent = 0;
   int pending_percent = 0;
   int pending_count = 0;

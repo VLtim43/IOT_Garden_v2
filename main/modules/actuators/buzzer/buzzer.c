@@ -25,6 +25,7 @@ static void buzzer_set_enabled(bool enabled) {
 static void buzzer_triple_task(void* arg) {
   (void)arg;
 
+  // Active buzzer only needs short on/off pulses, not PWM tone generation.
   for (int i = 0; i < BUZZER_BEEP_COUNT; i++) {
     buzzer_set_enabled(true);
     vTaskDelay(pdMS_TO_TICKS(BUZZER_BEEP_ON_MS));
@@ -58,6 +59,7 @@ void buzzer_buzz_triple(void) {
     return;
   }
 
+  // Ignore retriggers while one alarm pattern is already playing.
   s_buzzer_active = true;
   if (xTaskCreate(buzzer_triple_task, "buzzer_triple", 2048, NULL, 5, NULL) !=
       pdPASS) {

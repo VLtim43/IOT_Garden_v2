@@ -47,6 +47,7 @@ typedef struct {
 // shared queue for IR and automation actions
 static QueueHandle_t s_control_queue;
 
+// Number buttons directly drive the demo RGB LED for quick classroom tests.
 static void control_handle_ir_rgb_color(uint32_t raw_code) {
   switch (raw_code) {
     case IR_CODE_1:
@@ -84,6 +85,7 @@ static void control_handle_ir_rgb_color(uint32_t raw_code) {
 static void control_configure_default_rules(void) {
   size_t rule_count = 0;
   const automation_rule_t* rules = default_rules_get(&rule_count);
+  // Load the built-in rules table into the automation engine slots.
   for (size_t i = 0; i < rule_count && i < AUTOMATION_MAX_RULES; i++) {
     automation_set_rule(i, &rules[i]);
   }
@@ -129,6 +131,7 @@ static void control_handle_ir_request(const control_request_t* request) {
   garden_state_set_ir_command(request->payload.ir.command_name);
   garden_state_mark_ir_activity();
 
+  // Demo RGB controls are independent from the WS2812B panel controls below.
   control_handle_ir_rgb_color(raw_code);
 
   switch (raw_code) {

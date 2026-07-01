@@ -12,7 +12,9 @@ typedef enum {
   RGB_LED_COLOR_WHITE,
 } rgb_led_color_t;
 
+// prepare discrete RGB LED output pins
 void rgb_led_init(void);
+// set one of the predefined RGB channel combinations
 void rgb_led_set_color(rgb_led_color_t color);
 
 #endif

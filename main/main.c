@@ -13,6 +13,7 @@
 #include "water_pump.h"
 
 void app_main(void) {
+  // Shared state comes first so every task has a valid data source.
   garden_state_init();
 
   // sensors start

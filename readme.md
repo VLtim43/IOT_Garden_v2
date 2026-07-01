@@ -34,7 +34,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - The control task handles manual commands and polls automation rules.
 - Default automation rules switch LEDs to `RED` at night after `18:00`, and back to `PURPL` during day after `06:00`.
 - Demo RGB rules switch the discrete RGB LED to `RED` when light is blocked and `GREEN` when light is detected.
-- Low-water rule buzzes the buzzer three times when water level reaches `0%`.
+- Low-water rule buzzes the buzzer three times when water level drops below `5%`.
 - Actuator modules apply LED and pump changes, then write visible status back into shared state.
 - The OLED task reads shared state and redraws only changed fields.
 
@@ -150,7 +150,7 @@ Core modules:
 
 - Night rule: if ambient light is not detected and time is `>= 18:00`, set LED color to `RED`
 - Day rule: if ambient light is detected and time is `>= 06:00`, set LED color to `PURPL`
-- Empty-water rule: if water level is `0%`, buzz three times
+- Low-water rule: if water level is `< 5%`, buzz three times
 - Demo RGB night rule: if ambient light is not detected, set RGB LED to `RED`
 - Demo RGB day rule: if ambient light is detected, set RGB LED to `GREEN`
 - Fixed-color automation uses the same LED palette as manual IR control: `PURPL`, `RED`, `BLUE`

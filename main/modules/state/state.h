@@ -20,7 +20,9 @@ typedef struct {
   char pump_status[GARDEN_PUMP_STATUS_MAX_LEN];
 } garden_state_t;
 
+// initialize mutex-protected shared state with defaults
 void garden_state_init(void);
+// read a copy of the current shared state
 garden_state_t garden_state_get(void);
 void garden_state_set_ambient_light(bool detected);
 void garden_state_set_temperature(int temperature_c);

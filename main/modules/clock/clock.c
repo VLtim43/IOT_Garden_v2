@@ -27,6 +27,7 @@ enum {
 
 static void ds1302_delay(void) { esp_rom_delay_us(2); }
 
+// DS1302 uses a simple bit-banged 3-wire bus.
 static void ds1302_begin_session(void) {
   ESP_ERROR_CHECK(gpio_set_level(DS1302_CLK_GPIO, 0));
   ESP_ERROR_CHECK(gpio_set_level(DS1302_RST_GPIO, 1));
@@ -127,6 +128,7 @@ static bool ds1302_read_time(int* hour, int* minute) {
   int minute_value = bcd_to_int(minutes_raw & 0x7F);
   int hour_value;
 
+  // Decode either 12-hour or 24-hour register format into 24-hour time.
   if ((hours_raw & 0x80) != 0) {
     hour_value = bcd_to_int(hours_raw & 0x1F);
     if ((hours_raw & 0x20) != 0 && hour_value < 12) {

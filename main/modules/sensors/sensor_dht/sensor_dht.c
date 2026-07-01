@@ -13,6 +13,7 @@ static const char* TAG = "DHT11";
 static void sensor_dht_task(void* arg) {
   (void)arg;
 
+  // DHT11 needs a short settle time before the first read.
   gpio_set_pull_mode(DHT11_DATA_GPIO, GPIO_PULLUP_ONLY);
   vTaskDelay(pdMS_TO_TICKS(1500));
 

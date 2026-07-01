@@ -30,6 +30,7 @@ static int s_color_index = 0;
 static bool s_enabled = true;
 static TickType_t s_last_change_tick;
 
+// Share one cooldown across manual and automation changes.
 static bool w2812b_can_change_now(void) {
   TickType_t now = xTaskGetTickCount();
 
@@ -128,6 +129,7 @@ void w2812b_cycle_left(void) {
     return;
   }
 
+  // Wrap around to the end of the palette when moving left from index 0.
   s_color_index--;
   if (s_color_index < 0) {
     s_color_index = (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0])) - 1;
@@ -141,6 +143,7 @@ void w2812b_cycle_right(void) {
     return;
   }
 
+  // Wrap around to the start of the palette when moving past the last color.
   s_color_index++;
   if (s_color_index >=
       (int)(sizeof(W2812B_COLORS) / sizeof(W2812B_COLORS[0]))) {

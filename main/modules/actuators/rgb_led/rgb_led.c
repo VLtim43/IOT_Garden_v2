@@ -33,6 +33,7 @@ void rgb_led_set_color(rgb_led_color_t color) {
   bool green = false;
   bool blue = false;
 
+  // This discrete RGB LED is driven by simple on/off channel combinations.
   switch (color) {
     case RGB_LED_COLOR_RED:
       red = true;

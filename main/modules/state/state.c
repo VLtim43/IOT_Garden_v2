@@ -47,6 +47,7 @@ void garden_state_init(void) {
 garden_state_t garden_state_get(void) {
   garden_state_t state;
 
+  // Readers get a full snapshot so they can work without holding the mutex.
   lock_state();
   state = s_state;
   unlock_state();

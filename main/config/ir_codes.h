@@ -1,6 +1,7 @@
 #ifndef IR_CODES_H
 #define IR_CODES_H
 
+// NEC codes captured from the project remote.
 #define IR_CODE_1 0xBA45FF00UL
 #define IR_CODE_2 0xB946FF00UL
 #define IR_CODE_3 0xB847FF00UL

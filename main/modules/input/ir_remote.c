@@ -35,6 +35,7 @@ typedef struct {
 static QueueHandle_t s_ir_rx_queue;
 static rmt_symbol_word_t s_ir_symbols[IR_SYMBOL_BUFFER_SIZE];
 
+// NEC timings vary slightly in practice, so decoding uses tolerance windows.
 static bool approx_equal(uint32_t value, uint32_t target, uint32_t tolerance) {
   uint32_t min = target > tolerance ? target - tolerance : 0;
   uint32_t max = target + tolerance;
@@ -68,6 +69,7 @@ static bool ir_remote_parse_nec(const rmt_symbol_word_t* symbols,
     return false;
   }
 
+  // NEC bits arrive least-significant bit first.
   uint32_t code = 0;
   for (size_t i = 0; i < 32; i++) {
     const rmt_symbol_word_t* symbol = &symbols[i + 1];
@@ -197,6 +199,7 @@ static void ir_remote_task(void* arg) {
 
       if (command_name != NULL) {
         TickType_t now = xTaskGetTickCount();
+        // Drop near-duplicate repeats from one button hold.
         if ((now - last_command_tick) < pdMS_TO_TICKS(IR_COMMAND_COOLDOWN_MS)) {
           continue;
         }

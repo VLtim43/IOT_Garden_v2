@@ -12,6 +12,7 @@ static const char* TAG = "SOIL_SENSOR";
 static void sensor_soil_task(void* arg) {
   (void)arg;
 
+  // Configure the shared ADC channel once before the polling loop.
   ESP_ERROR_CHECK(adc_shared_config_channel(SOIL_SENSOR_ADC_CHANNEL));
 
   while (true) {
