@@ -18,9 +18,11 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - SSD1306 OLED status screen
 - NEC IR remote input and manual control
 - WS2812B LED panel control
+- Simple RGB demo LED actuator control
 - Water pump pulse control with cooldown protection
 - Queue-based control task for manual and automation actions
 - Default time-and-light-based LED automation rules
+- Demo-friendly light-triggered RGB automation rules
 
 ## Current Behavior
 
@@ -29,6 +31,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - The IR module decodes commands and sends them to the control queue.
 - The control task handles manual commands and polls automation rules.
 - Default automation rules switch LEDs to `RED` at night after `18:00`, and back to `PURPL` during day after `06:00`.
+- Demo RGB rules switch the discrete RGB LED to `RED` when light is blocked and `GREEN` when light is detected.
 - Actuator modules apply LED and pump changes, then write visible status back into shared state.
 - The OLED task reads shared state and redraws only changed fields.
 
@@ -60,6 +63,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - IR receiver
 - DS1302 RTC
 - WS2812B 25-LED panel
+- Simple RGB LED on three GPIO outputs
 - Small water pump
 
 ## Pin Map
@@ -69,6 +73,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - IR receiver: `GPIO26`
 - Water pump control: `GPIO4`
 - WS2812B data: `GPIO14`
+- RGB LED: `BLUE=GPIO13`, `GREEN=GPIO25`, `RED=GPIO32`
 - DS1302 RTC: `CLK=GPIO18`, `DAT=GPIO19`, `RST=GPIO21`
 - Soil sensor ADC: `GPIO33`
 - Water level ADC: `GPIO35`
@@ -123,13 +128,15 @@ Core modules:
 - `input/`: IR receiver and NEC decoding
 - `control/`: action queue and automation evaluation
 - `control/rules/`: built-in automation rule definitions
-- `actuators/`: WS2812B and water pump logic
+- `actuators/`: WS2812B, discrete RGB LED, and water pump logic
 - `display/`: OLED rendering
 
 ## Default Automation Rules
 
 - Night rule: if ambient light is not detected and time is `>= 18:00`, set LED color to `RED`
 - Day rule: if ambient light is detected and time is `>= 06:00`, set LED color to `PURPL`
+- Demo RGB night rule: if ambient light is not detected, set RGB LED to `RED`
+- Demo RGB day rule: if ambient light is detected, set RGB LED to `GREEN`
 - Fixed-color automation uses the same LED palette as manual IR control: `PURPL`, `RED`, `BLUE`
 - Built-in rules are defined in `main/modules/control/rules/default_rules.c`
 

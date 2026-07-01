@@ -7,6 +7,7 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "ir_codes.h"
+#include "rgb_led.h"
 #include "state.h"
 #include "water_pump.h"
 #include "w2812b.h"
@@ -74,6 +75,9 @@ static void control_apply_automation_action(const automation_action_t* action) {
     case AUTOMATION_ACTION_LED_SET_COLOR:
       // Fixed-color actions let automation choose a specific palette slot.
       w2812b_set_color_index(action->arg0);
+      return;
+    case AUTOMATION_ACTION_RGB_LED_SET_COLOR:
+      rgb_led_set_color((rgb_led_color_t)action->arg0);
       return;
     case AUTOMATION_ACTION_NONE:
     default:

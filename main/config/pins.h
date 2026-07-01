@@ -26,6 +26,11 @@
 // WS2812B LED strip control pin.
 #define W2812B_GPIO 14
 
+// Demo RGB LED pins. User wiring: blue on GPIO13, green on GPIO25, red on GPIO32.
+#define RGB_LED_BLUE_GPIO 13
+#define RGB_LED_GREEN_GPIO 25
+#define RGB_LED_RED_GPIO 32
+
 #define W2812B_LED_COUNT 25
 #define W2812B_BRIGHTNESS 1
 
