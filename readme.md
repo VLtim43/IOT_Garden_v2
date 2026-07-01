@@ -20,6 +20,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - WS2812B LED panel control
 - Water pump pulse control with cooldown protection
 - Queue-based control task for manual and automation actions
+- Default time-and-light-based LED automation rules
 
 ## Current Behavior
 
@@ -27,6 +28,7 @@ It monitors plant and environment data, shows live status on an OLED, accepts IR
 - Sensor tasks publish readings into a mutex-protected `garden_state_t`.
 - The IR module decodes commands and sends them to the control queue.
 - The control task handles manual commands and polls automation rules.
+- Default automation rules switch LEDs to `RED` at night after `18:00`, and back to `PURPL` during day after `06:00`.
 - Actuator modules apply LED and pump changes, then write visible status back into shared state.
 - The OLED task reads shared state and redraws only changed fields.
 
@@ -120,8 +122,16 @@ Core modules:
 - `clock/`: DS1302 RTC update loop
 - `input/`: IR receiver and NEC decoding
 - `control/`: action queue and automation evaluation
+- `control/rules/`: built-in automation rule definitions
 - `actuators/`: WS2812B and water pump logic
 - `display/`: OLED rendering
+
+## Default Automation Rules
+
+- Night rule: if ambient light is not detected and time is `>= 18:00`, set LED color to `RED`
+- Day rule: if ambient light is detected and time is `>= 06:00`, set LED color to `PURPL`
+- Fixed-color automation uses the same LED palette as manual IR control: `PURPL`, `RED`, `BLUE`
+- Built-in rules are defined in `main/modules/control/rules/default_rules.c`
 
 ## Control Flow
 

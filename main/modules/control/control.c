@@ -1,6 +1,7 @@
 #include "control.h"
 
 #include "automation.h"
+#include "default_rules.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -19,10 +20,6 @@ static const char* TAG = "CONTROL";
 enum {
   CONTROL_ACTION_QUEUE_LEN = 8,
   CONTROL_LOOP_INTERVAL_MS = 250,
-  CONTROL_TIME_6PM_MINUTES = 18 * 60,
-  CONTROL_TIME_6AM_MINUTES = 6 * 60,
-  CONTROL_LED_COLOR_PURPLE = 0,
-  CONTROL_LED_COLOR_RED = 1,
 };
 
 typedef enum {
@@ -49,64 +46,11 @@ typedef struct {
 static QueueHandle_t s_control_queue;
 
 static void control_configure_default_rules(void) {
-  // Night rule: after 18:00 and with no ambient light, force LEDs to red.
-  automation_rule_t night_rule = {
-      .enabled = true,
-      .edge_triggered = true,
-      .condition_mode = AUTOMATION_CONDITIONS_ALL,
-      .conditions =
-          {
-              {
-                  .enabled = true,
-                  .field = AUTOMATION_FIELD_AMBIENT_LIGHT,
-                  .op = AUTOMATION_OP_EQ,
-                  .value = 0,
-              },
-              {
-                  .enabled = true,
-                  .field = AUTOMATION_FIELD_TIME_MINUTES,
-                  .op = AUTOMATION_OP_GTE,
-                  .value = CONTROL_TIME_6PM_MINUTES,
-              },
-          },
-      .action =
-          {
-              .type = AUTOMATION_ACTION_LED_SET_COLOR,
-              .arg0 = CONTROL_LED_COLOR_RED,
-          },
-      .priority = 10,
-  };
-
-  // Day rule: after 06:00 and with ambient light present, restore default purple.
-  automation_rule_t day_rule = {
-      .enabled = true,
-      .edge_triggered = true,
-      .condition_mode = AUTOMATION_CONDITIONS_ALL,
-      .conditions =
-          {
-              {
-                  .enabled = true,
-                  .field = AUTOMATION_FIELD_AMBIENT_LIGHT,
-                  .op = AUTOMATION_OP_EQ,
-                  .value = 1,
-              },
-              {
-                  .enabled = true,
-                  .field = AUTOMATION_FIELD_TIME_MINUTES,
-                  .op = AUTOMATION_OP_GTE,
-                  .value = CONTROL_TIME_6AM_MINUTES,
-              },
-          },
-      .action =
-          {
-              .type = AUTOMATION_ACTION_LED_SET_COLOR,
-              .arg0 = CONTROL_LED_COLOR_PURPLE,
-          },
-      .priority = 10,
-  };
-
-  automation_set_rule(0, &night_rule);
-  automation_set_rule(1, &day_rule);
+  size_t rule_count = 0;
+  const automation_rule_t* rules = default_rules_get(&rule_count);
+  for (size_t i = 0; i < rule_count && i < AUTOMATION_MAX_RULES; i++) {
+    automation_set_rule(i, &rules[i]);
+  }
 }
 
 static void control_apply_automation_action(const automation_action_t* action) {
